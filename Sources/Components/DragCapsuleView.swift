@@ -266,23 +266,11 @@ struct BoneCapsuleShape: Shape {
         let w = rect.width
         let h = rect.height
         
-        // Squeeze Calculation
-        // Same logic: starts kicking in after slack
-        let slack: CGFloat = 40 
-        var squeezeAmount: CGFloat = 0
-        
-        if dragOffset > slack {
-            let overshoot = dragOffset - slack
-            // Max squeeze depth reduced to 8 (was 12) -> Less aggressive
-            // Sensitivity reduced (/15.0 instead of /10.0)
-            squeezeAmount = min(8, overshoot / 15.0) 
-        }
+        // Standard Capsule Shape (No Squeeze)
         
         // Top Edge
         path.move(to: CGPoint(x: radius, y: 0))
-        // Concave Curve
-        path.addQuadCurve(to: CGPoint(x: w - radius, y: 0),
-                          control: CGPoint(x: w / 2, y: squeezeAmount)) // Positive y pushes DOWN
+        path.addLine(to: CGPoint(x: w - radius, y: 0))
         
         // Right Arc
         path.addArc(center: CGPoint(x: w - radius, y: radius),
@@ -292,9 +280,7 @@ struct BoneCapsuleShape: Shape {
                     clockwise: false)
         
         // Bottom Edge
-        // Concave Curve
-        path.addQuadCurve(to: CGPoint(x: radius, y: h),
-                          control: CGPoint(x: w / 2, y: h - squeezeAmount)) // Negative y relative to h pushes UP
+        path.addLine(to: CGPoint(x: radius, y: h))
         
         // Left Arc
         path.addArc(center: CGPoint(x: radius, y: radius),
