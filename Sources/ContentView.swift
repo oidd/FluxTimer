@@ -97,15 +97,11 @@ struct ContentView: View {
                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                     
                     ZStack {
-                        if appState == .idle {
-                            PlusButton(isExpanded: isDragging) {}
-                                .transition(.opacity.combined(with: .scale))
-                        } else {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(.white)
-                                .transition(.scale.combined(with: .opacity))
-                        }
+                        Image(systemName: "plus")
+                            .font(.system(size: 24, weight: .medium, design: .rounded)) // Thicker, simplified icon
+                            .foregroundColor(appState == .idle ? .primary : .white) // Adapt color
+                            .rotationEffect(.degrees(appState == .idle ? 0 : 45)) // Rotate 45 deg (minimal) to become X
+                            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: appState)
                     }
                     
                     ClickDraggableButton(action: {
