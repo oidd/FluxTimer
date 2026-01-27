@@ -222,6 +222,32 @@ struct DragCapsuleView: View {
         )
         .fixedSize(horizontal: true, vertical: false)
         .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
+        // PREDICTION CAPSULE OVERLAY
+        .overlay(alignment: .topLeading) {
+            if minutes > 0 {
+                TimelineView(.periodic(from: .now, by: 1.0)) { context in
+                    let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
+                    let timeString = endDate.formatted(date: .omitted, time: .standard) // HH:mm:ss
+                    
+                    Text("预计 \(timeString) 结束计时")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundColor(.white.opacity(0.9))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                                .overlay(
+                                    Capsule().stroke(.white.opacity(0.15), lineWidth: 0.5)
+                                )
+                        )
+                        .offset(y: -24) // Floating above snugly
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+        }
     }
     
     // Shake Logic

@@ -78,7 +78,7 @@ struct PresetListView: View {
             }
         }
         .frame(width: 160) // Slightly wider for delete button
-        .padding(.top, 10)
+        // REMOVED PADDING .padding(.top, 10)
         
         // HOLE & GAP FIX:
         // Ensure the entire frame (including spacing and padding) is hit-testable.

@@ -82,7 +82,7 @@ struct ContentView: View {
                 }
             }
             .frame(width: 363, height: 50, alignment: .trailing) // Explicit width ending at 363, grow to LEFT
-            .offset(x: 0, y: 20) // Top-Left origin
+            .offset(x: 0, y: 50) // Top-Left origin
             .zIndex(10)
             
             // 2. CENTER ANCHOR (Button + Presets)
@@ -128,7 +128,7 @@ struct ContentView: View {
                 if appState == .idle && isHovering {
                     Rectangle()
                         .fill(Color.clear)
-                        .frame(width: 50, height: 10)
+                        .frame(width: 50, height: 6) // Reduced gap to 6px
                         .onHover { hover in
                             if hover { cancelHoverClose() } else { scheduleHoverClose() }
                         }
@@ -151,7 +151,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .offset(x: 375, y: 20)
+            .offset(x: 375, y: 50)
             .zIndex(100) // Topmost
             
             // 3. RIGHT WING (Capsule)
@@ -180,7 +180,7 @@ struct ContentView: View {
                     .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
                 }
             }
-            .offset(x: 437, y: 20)
+            .offset(x: 437, y: 50)
             .zIndex(10)
             
         }
