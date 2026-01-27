@@ -81,7 +81,7 @@ struct ContentView: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
-            .frame(width: 363, height: 50) // Explicit width ending at 363
+            .frame(width: 363, height: 50, alignment: .trailing) // Explicit width ending at 363, grow to LEFT
             .offset(x: 0, y: 20) // Top-Left origin
             .zIndex(10)
             
@@ -255,14 +255,109 @@ struct RunningTimerView: View {
     @Binding var timer: RunningTimer
     var onStop: () -> Void
     
-    var body: some View {
-        ZStack {
-             TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
-                 .onTapGesture {
-                     onStop()
-                 }
-        }
-        .frame(width: 50, height: 50)
+    @State private var isHovering = false
+    
+    // Helper to format time "MM:ss"
+    private var formattedTime: String {
+        let m = Int(timer.remainingTime) / 60
+        let s = Int(timer.remainingTime) % 60
+        return String(format: "%02d:%02d", m, s)
     }
+    
+    var body: some View {
+        ZStack(alignment: .leading) {
+            // Background Capsule (Only visible when hovering)
+            if isHovering {
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
+                    .overlay(
+                        Capsule()
+                            .stroke(.white.opacity(0.2), lineWidth: 1)
+                    )
+                    .matchedGeometryEffect(id: "bg", in: namespace)
+            } else {
+                // Invisible placeholder to match height?
+                // No, sticking to frame height 50 is enough.
+            }
+
+            HStack(spacing: 8) {
+                // 1. Left Icon: Badge (Hover) OR Progress Ring (Normal)
+                ZStack {
+                    if isHovering {
+                        // Static Badge (Total Minutes)
+                        ZStack {
+                            Circle()
+                                .fill(Color.white.opacity(0.2)) // Translucent background
+                            
+                            Text("\(Int(timer.totalTime / 60))")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
+                        .frame(width: 42, height: 42) // Matched scaled size
+                        .transition(.scale.combined(with: .opacity))
+                    } else {
+                        // Progress Ring
+                        TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
+                            .transition(.identity)
+                    }
+                }
+                
+                // 2. Expanded Info (Visible on Hover)
+                if isHovering {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Digital Clock
+                        Text(formattedTime)
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
+                        
+                        // Title Marquee
+                        MarqueeText(
+                            text: timer.title.isEmpty ? "倒计时" : timer.title,
+                            font: .system(size: 13, weight: .medium),
+                            leftFade: 5,
+                            rightFade: 5,
+                            startDelay: 0.5,
+                            alignment: .leading
+                        )
+                        .frame(width: 80, height: 16)
+                        .opacity(0.8)
+                    }
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                    
+                    // Close Button
+                    Button(action: onStop) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(width: 24, height: 24)
+                            // Clean style: No background
+                            .contentShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 4)
+                    .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(.horizontal, isHovering ? 8 : 0) // Consistent horizontal padding
+            // REMOVE VERTICAL PADDING: Lock to 50px height
+        }
+        .frame(height: 50) // Enforce 50px height
+        .fixedSize(horizontal: true, vertical: false) // CRITICAL: Force ZStack to shrink-wrap content
+        // Interaction
+        .onHover { hover in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                isHovering = hover
+            }
+        }
+        // Click to toggle/stop? User said "Click close button to end".
+        // Keep tap on circle as backup? Or remove?
+        // Let's remove the tap on circle so user must use the X, preventing accidental closure.
+        .padding(.vertical, 0) // Clean height
+    }
+    
+    @Namespace private var namespace
 }
 
