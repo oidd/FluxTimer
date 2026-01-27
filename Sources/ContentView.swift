@@ -1,11 +1,13 @@
 import SwiftUI
 
 // MULTI-TIMER MODEL
+// MULTI-TIMER MODEL
 struct RunningTimer: Identifiable, Equatable {
     let id = UUID()
     var totalTime: TimeInterval
     var remainingTime: TimeInterval
     var isFinished: Bool = false
+    var hasNotified: Bool = false // Track notification state
     var title: String
 }
 
@@ -191,6 +193,25 @@ struct ContentView: View {
                      runningTimers[i].remainingTime -= 1
                  } else {
                      runningTimers[i].isFinished = true
+                     
+                     // Trigger Notification ONCE
+                     if !runningTimers[i].hasNotified {
+                         runningTimers[i].hasNotified = true
+                         let timerId = runningTimers[i].id
+                         let title = runningTimers[i].title
+                         
+                         print("DEBUG: Showing notification for \(title)") // Debug
+                         
+                         NotificationWindowManager.shared.show(
+                             title: title,
+                             onSnooze: { min in
+                                 self.snoozeTimer(id: timerId, minutes: min)
+                             },
+                             onDismiss: {
+                                 self.dismissTimer(id: timerId)
+                             }
+                         )
+                     }
                  }
              }
         }
@@ -217,6 +238,24 @@ struct ContentView: View {
     func stopTimer(_ timer: RunningTimer) {
         withAnimation {
             runningTimers.removeAll { $0.id == timer.id }
+        }
+    }
+    
+    func snoozeTimer(id: UUID, minutes: Int) {
+        if let index = runningTimers.firstIndex(where: { $0.id == id }) {
+            withAnimation {
+                let addedTime = TimeInterval(minutes * 60)
+                runningTimers[index].remainingTime = addedTime
+                runningTimers[index].totalTime = addedTime // Reset total visual ring
+                runningTimers[index].isFinished = false
+                runningTimers[index].hasNotified = false // Reset notification trigger
+            }
+        }
+    }
+    
+    func dismissTimer(id: UUID) {
+        withAnimation {
+            runningTimers.removeAll { $0.id == id }
         }
     }
     
