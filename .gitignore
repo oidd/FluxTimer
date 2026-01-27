@@ -1,0 +1,13 @@
+
+# Mac OS
+.DS_Store
+
+# Swift / Xcode
+.build/
+*.app/
+*.xcodeproj/
+*.xcworkspace/
+.swiftpm/
+
+# Logs
+*.log
