@@ -175,11 +175,13 @@ struct DragCapsuleView: View {
             )
         }
         .frame(height: 50)
-        .scaleEffect(x: 1.0, y: squeezeScale(dragOffset))
+        // Vertical Squeeze
+        // REMOVED: .scaleEffect(x: 1.0, y: squeezeScale(dragOffset))
+        
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
+        .clipShape(BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0))
         .overlay(
-            RoundedRectangle(cornerRadius: 25, style: .continuous)
+            BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0)
                 .stroke(.white.opacity(0.2), lineWidth: 1)
         )
         .fixedSize(horizontal: true, vertical: false)
@@ -209,17 +211,62 @@ struct DragCapsuleView: View {
             return slack + (40 * log10(1 + overshoot / 25))
         }
     }
+}
+
+// LIQUID BONE SHAPE
+struct BoneCapsuleShape: Shape {
+    var dragOffset: CGFloat
     
-    // Squeeze Logic
-    private func squeezeScale(_ input: CGFloat) -> CGFloat {
-        if !isDragging { return 1.0 }
-        if input < 0 { return 1.0 }
-        let slack: CGFloat = 80
-        if input <= slack {
-            return 1.0
-        } else {
-            let overshoot = input - slack
-            return max(0.92, 1.0 - (overshoot / 2000.0))
+    var animatableData: CGFloat {
+        get { dragOffset }
+        set { dragOffset = newValue }
+    }
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        
+        // Fixed radius for the ends
+        let radius: CGFloat = 25 
+        let w = rect.width
+        let h = rect.height
+        
+        // Squeeze Calculation
+        // Same logic: starts kicking in after slack
+        let slack: CGFloat = 40 // START SOONER (was 80)
+        var squeezeAmount: CGFloat = 0
+        
+        if dragOffset > slack {
+            let overshoot = dragOffset - slack
+            // Max squeeze depth ~12px (makes waist 26px instead of 50px) -> Very Visible
+            squeezeAmount = min(12, overshoot / 10.0) // SENSITIVE: /10 instead of /30
         }
+        
+        // Top Edge
+        path.move(to: CGPoint(x: radius, y: 0))
+        // Concave Curve
+        path.addQuadCurve(to: CGPoint(x: w - radius, y: 0),
+                          control: CGPoint(x: w / 2, y: squeezeAmount)) // Positive y pushes DOWN
+        
+        // Right Arc
+        path.addArc(center: CGPoint(x: w - radius, y: radius),
+                    radius: radius,
+                    startAngle: .degrees(-90),
+                    endAngle: .degrees(90),
+                    clockwise: false)
+        
+        // Bottom Edge
+        // Concave Curve
+        path.addQuadCurve(to: CGPoint(x: radius, y: h),
+                          control: CGPoint(x: w / 2, y: h - squeezeAmount)) // Negative y relative to h pushes UP
+        
+        // Left Arc
+        path.addArc(center: CGPoint(x: radius, y: radius),
+                    radius: radius,
+                    startAngle: .degrees(90),
+                    endAngle: .degrees(270),
+                    clockwise: false)
+        
+        path.closeSubpath()
+        return path
     }
 }
