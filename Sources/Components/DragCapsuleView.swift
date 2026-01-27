@@ -215,11 +215,14 @@ struct DragCapsuleView: View {
         // REMOVED: .scaleEffect(x: 1.0, y: squeezeScale(dragOffset))
         
         .background(.ultraThinMaterial)
-        .clipShape(BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0))
+        // INNER STROKE TRICK:
+        // 1. Draw 2px stroke (1px in, 1px out)
         .overlay(
             BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0)
-                .stroke(.white.opacity(0.2), lineWidth: 1)
+                .stroke(.white.opacity(0.2), lineWidth: 2)
         )
+        // 2. Clip the whole view to shape, adjusting the outer 1px
+        .clipShape(BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0))
         .fixedSize(horizontal: true, vertical: false)
         .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
         // PREDICTION CAPSULE OVERLAY
@@ -240,7 +243,7 @@ struct DragCapsuleView: View {
                                 .fill(.ultraThinMaterial)
                                 .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                                 .overlay(
-                                    Capsule().stroke(.white.opacity(0.15), lineWidth: 0.5)
+                                    Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
                                 )
                         )
                         .offset(y: -24) // Floating above snugly
@@ -285,6 +288,12 @@ struct BoneCapsuleShape: Shape {
     }
     
     func path(in rect: CGRect) -> Path {
+        // OPTIMIZATION: Use System Capsule Path when idle (offset == 0)
+        // This ensures perfect antialiasing matching the Preset list.
+        if abs(dragOffset) < 1 {
+            return Path(roundedRect: rect, cornerRadius: rect.height / 2)
+        }
+        
         var path = Path()
         
         // Fixed radius for the ends

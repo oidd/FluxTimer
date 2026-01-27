@@ -93,7 +93,7 @@ struct ContentView: View {
                     Circle()
                         .fill(.ultraThinMaterial)
                         .frame(width: 50, height: 50)
-                        .overlay(Circle().stroke(.white.opacity(0.2), lineWidth: 1))
+                        .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 1))
                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                     
                     ZStack {
@@ -269,7 +269,7 @@ struct RunningTimerView: View {
                     .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
                     .overlay(
                         Capsule()
-                            .stroke(.white.opacity(0.2), lineWidth: 1)
+                            .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                     )
                     .matchedGeometryEffect(id: "bg", in: namespace)
             } else {

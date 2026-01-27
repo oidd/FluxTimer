@@ -55,7 +55,7 @@ struct PresetListView: View {
                     .background(.ultraThinMaterial) // STANDARD
                     .clipShape(Capsule())
                     .overlay(
-                        Capsule().stroke(.white.opacity(0.2), lineWidth: 1) // STANDARD
+                        Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 1) // STANDARD
                     )
                 }
                 .buttonStyle(.plain)
