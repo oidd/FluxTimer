@@ -58,6 +58,8 @@ struct DragCapsuleView: View {
                 .padding(.horizontal, 10)
                 .padding(.vertical, 12) // TALLER: ~44px height (Vs 50px container)
                 .background(Capsule().fill(.white.opacity(0.2)))
+                .scaleEffect(x: 1.0 + (isDragging ? min(0.02, dragOffset / 3000) : 0), // MICRO: Very subtle X expansion
+                             y: 1.0 - (isDragging ? min(0.04, dragOffset / 2000) : 0)) // MICRO: Subtle Y shrink
                 .padding(.leading, 4) // Reduce leading margin slightly to balance
                 .fixedSize()
             
@@ -165,10 +167,44 @@ struct DragCapsuleView: View {
                         dragChanged(value.translation.width)
                     }
                     .onEnded { _ in
-                        isDragging = false
-                        let currentDelta = dampedDelta(dragOffset)
-                        restingWidth = max(0, restingWidth + currentDelta)
-                        dragOffset = 0
+                        // SPRING BACK LOGIC: Do NOT update restingWidth.
+                        // restingWidth = max(0, restingWidth + currentDelta) // REMOVED
+                        
+                        // We need to animate the spring back.
+                        // However, dragOffset is tied to Gesture state which might reset instantly.
+                        // But since we use @State dragOffset, we can control it.
+                        // Let's set isDragging false immediately (to show handle/star), 
+                        // but we rely on dragOffset for the Spacer width.
+                        
+                        let currentOffset = dragOffset
+                        isDragging = false // This switches visuals back to normal mode
+                        
+                        // Manually animate Spacer back to 0
+                        // Since isDragging is false, the spacer logic:
+                        // width = restingWidth + (isDragging ? ... : 0)
+                        // This immediately cuts to restingWidth (0).
+                        
+                        // To allow animation, we might need to keep using dragOffset visually for a moment?
+                        // Actually, SwiftUI transitions might handle it?
+                        // No, Spacer width is explicit.
+                        
+                        // Let's rely on SwiftUI animation system.
+                        // The `dampedDelta` is only used when `isDragging`.
+                        // If we set isDragging to false, width jumps to `restingWidth` (0).
+                        // If we want it to animate, we should probably animate `restingWidth`?
+                        // Or just update body to use an animated value?
+                        
+                        // SIMPLE FIX: Just `withAnimation(.spring) { isDragging = false; dragOffset = 0 }`?
+                        // DragGesture finishes, we must manually reset state.
+                        
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { 
+                             dragOffset = 0
+                             // Note: isDragging is monitored by view updates.
+                             // Modifying isDragging inside withAnimation should animate the Spacer width change (from X to 0).
+                        }
+                        
+                         isDragging = false // Set state
+                        
                         NSCursor.pop()
                         dragEnded()
                     }
@@ -232,13 +268,14 @@ struct BoneCapsuleShape: Shape {
         
         // Squeeze Calculation
         // Same logic: starts kicking in after slack
-        let slack: CGFloat = 40 // START SOONER (was 80)
+        let slack: CGFloat = 40 
         var squeezeAmount: CGFloat = 0
         
         if dragOffset > slack {
             let overshoot = dragOffset - slack
-            // Max squeeze depth ~12px (makes waist 26px instead of 50px) -> Very Visible
-            squeezeAmount = min(12, overshoot / 10.0) // SENSITIVE: /10 instead of /30
+            // Max squeeze depth reduced to 8 (was 12) -> Less aggressive
+            // Sensitivity reduced (/15.0 instead of /10.0)
+            squeezeAmount = min(8, overshoot / 15.0) 
         }
         
         // Top Edge
