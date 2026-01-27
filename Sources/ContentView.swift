@@ -1,5 +1,14 @@
 import SwiftUI
 
+// MULTI-TIMER MODEL
+struct RunningTimer: Identifiable, Equatable {
+    let id = UUID()
+    var totalTime: TimeInterval
+    var remainingTime: TimeInterval
+    var isFinished: Bool = false
+    var title: String
+}
+
 struct ContentView: View {
     enum AppState {
         case idle // Plus button only
@@ -8,13 +17,16 @@ struct ContentView: View {
         case finished // Ripple effect
     }
     
+    // APP STATE
     @State private var appState: AppState = .idle
     @State private var minutes: Int = 0
     @State private var timerTitle: String = ""
     @State private var isDragging = false
     @State private var isHovering = false
-    @State private var remainingTime: TimeInterval = 0
-    @State private var totalTime: TimeInterval = 0
+    
+    // MULTI-TIMER STATE
+    @State private var runningTimers: [RunningTimer] = []
+    
     @State private var savedPresets: [TimerPreset] = [
         TimerPreset(minutes: 5, title: "休息一下"),
         TimerPreset(minutes: 25, title: "番茄专注"),
@@ -49,43 +61,106 @@ struct ContentView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Main Timer Area (Top Row)
-            HStack(spacing: 5) { // Positive spacing to separate Circle and Capsule
+        // ROOT CANVAS: 800x600 Fixed
+        // WE USE ABSOLUTE POSITIONING (OFFSETS) to guarantee NO shifts.
+        // Center X = 400.
+        // Button Width = 50. Half = 25.
+        // Button X Range = [375, 425].
+        // Spacing = 12.
+        
+        ZStack(alignment: .topLeading) {
+            
+            // 1. LEFT WING (Timers)
+            // Ends at x = 363 (375 - 12)
+            HStack(spacing: 12) {
+                Spacer() // Fill from left
+                ForEach($runningTimers) { $timer in
+                    RunningTimerView(timer: $timer, onStop: {
+                         stopTimer(timer)
+                    })
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                }
+            }
+            .frame(width: 363, height: 50) // Explicit width ending at 363
+            .offset(x: 0, y: 20) // Top-Left origin
+            .zIndex(10)
+            
+            // 2. CENTER ANCHOR (Button + Presets)
+            // Starts at x = 375.
+            VStack(alignment: .leading, spacing: 0) {
+                // BUTTON
                 ZStack {
-                    if appState == .running || appState == .finished {
-                        TimerCircleView(totalTime: totalTime, remainingTime: remainingTime)
-                            .transition(.scale.combined(with: .opacity))
-                            .onTapGesture {
-                                reset()
-                            }
-                    } else {
-                        ClickDraggableButton(action: {
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 50, height: 50)
+                        .overlay(Circle().stroke(.white.opacity(0.2), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                    
+                    ZStack {
+                        if appState == .idle {
+                            PlusButton(isExpanded: isDragging) {}
+                                .transition(.opacity.combined(with: .scale))
+                        } else {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 20, weight: .medium))
+                                .foregroundColor(.white)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    
+                    ClickDraggableButton(action: {
+                        DispatchQueue.main.async {
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                 if appState == .idle {
                                     appState = .setting
-                                    minutes = 0 // Reset
+                                    minutes = 0
                                 } else {
                                     appState = .idle
                                 }
                             }
-                        }) {
-                            PlusButton(isExpanded: appState == .setting || isDragging) {}
                         }
-                        .frame(width: 50, height: 50)
-                        .contentShape(Circle()) // STRICT HOVER SHAPE (Only the circle)
-                        .onHover { hover in
-                            if hover {
-                                cancelHoverClose()
-                            } else {
-                                scheduleHoverClose()
-                            }
-                        }
+                    }) {
+                        Color.clear.contentShape(Circle())
                     }
                 }
-                .zIndex(20)
+                .frame(width: 50, height: 50)
+                .onHover { hover in
+                     if hover { cancelHoverClose() } else { scheduleHoverClose() }
+                }
                 
-                // Capsule
+                // PRESET LIST (Connected below)
+                if appState == .idle && isHovering {
+                    Rectangle()
+                        .fill(Color.clear)
+                        .frame(width: 50, height: 10)
+                        .onHover { hover in
+                            if hover { cancelHoverClose() } else { scheduleHoverClose() }
+                        }
+                    
+                    PresetListView(
+                        isVisible: isHovering, 
+                        presets: $savedPresets,
+                        onSelect: { preset in
+                            self.minutes = preset.minutes
+                            self.timerTitle = preset.title
+                            startNewTimer()
+                        },
+                        onDelete: { preset in
+                            deletePreset(preset)
+                        }
+                    )
+                    .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+                    .onHover { hover in
+                        if hover { cancelHoverClose() } else { scheduleHoverClose() }
+                    }
+                }
+            }
+            .offset(x: 375, y: 20)
+            .zIndex(100) // Topmost
+            
+            // 3. RIGHT WING (Capsule)
+            // Starts at x = 437 (425 + 12)
+            ZStack(alignment: .leading) {
                 if appState == .setting || isDragging {
                     DragCapsuleView(
                         minutes: $minutes,
@@ -98,76 +173,54 @@ struct ContentView: View {
                         },
                         onCommit: {
                             if minutes > 0 {
-                                startTimer()
+                                startNewTimer()
                             }
                         },
                         onFavorite: {
                             savePreset()
                         }
                     )
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.1, anchor: .leading).combined(with: .opacity),
-                        removal: .scale(scale: 0.1, anchor: .leading).combined(with: .opacity)
-                    ))
-                    .zIndex(10)
+                    // Grow from Left (Button side)
+                    .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
                 }
             }
-            .frame(height: 60)
-            .zIndex(20)
-            .padding(20)
+            .offset(x: 437, y: 20)
+            .zIndex(10)
             
-            // Preset List
-            // LOGIC: Conditional + Debounce + Zero Gap.
-            // 1. Conditional: `if isHovering` removes it from hierarchy -> NO GHOST TRIGGER.
-            // 2. Debounce: Allows mouse to travel from Button to List.
-            // 3. Zero Gap: -35 padding pulls it up.
-            
-            if appState == .idle && isHovering {
-                PresetListView(
-                    isVisible: isHovering, // Always true here
-                    presets: $savedPresets,
-                    onSelect: { preset in
-                        self.minutes = preset.minutes
-                        self.timerTitle = preset.title
-                        startTimer()
-                    },
-                    onDelete: { preset in
-                        deletePreset(preset)
-                    }
-                )
-                // Layout
-                .padding(.top, -25)
-                .padding(.leading, 28)
-                // Bridge Logic: If checking here, cancel close
-                .onHover { hover in
-                    if hover {
-                        cancelHoverClose()
-                    } else {
-                        scheduleHoverClose()
-                    }
-                }
-                // Transitions: Fade ONLY.
-                // Using .move can cause the view to slide under the mouse while closing, triggering a re-open loop ("Twitching").
-                .transition(.opacity.animation(.easeInOut(duration: 0.2)))
-                .zIndex(10)
-            }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(width: 800, height: 600, alignment: .topLeading)
         .onReceive(timer) { _ in
-            guard appState == .running else { return }
-            if remainingTime > 0 {
-                remainingTime -= 1
-            } else {
-                appState = .finished
-            }
+             for i in runningTimers.indices {
+                 if runningTimers[i].remainingTime > 0 {
+                     runningTimers[i].remainingTime -= 1
+                 } else {
+                     runningTimers[i].isFinished = true
+                 }
+             }
         }
     }
     
-    func startTimer() {
-        totalTime = TimeInterval(minutes * 60)
-        remainingTime = totalTime
+    // MARK: - Actions
+    
+    func startNewTimer() {
+        let newTimer = RunningTimer(
+            totalTime: TimeInterval(minutes * 60),
+            remainingTime: TimeInterval(minutes * 60),
+            title: timerTitle
+        )
+        
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-            appState = .running
+            runningTimers.append(newTimer)
+            appState = .idle
+            minutes = 0
+            timerTitle = ""
+            isDragging = false 
+        }
+    }
+    
+    func stopTimer(_ timer: RunningTimer) {
+        withAnimation {
+            runningTimers.removeAll { $0.id == timer.id }
         }
     }
     
@@ -195,3 +248,21 @@ struct ContentView: View {
         }
     }
 }
+
+// MARK: - Components Helper
+
+struct RunningTimerView: View {
+    @Binding var timer: RunningTimer
+    var onStop: () -> Void
+    
+    var body: some View {
+        ZStack {
+             TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
+                 .onTapGesture {
+                     onStop()
+                 }
+        }
+        .frame(width: 50, height: 50)
+    }
+}
+
