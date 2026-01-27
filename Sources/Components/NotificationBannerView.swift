@@ -5,9 +5,13 @@ struct NotificationBannerView: View {
     let onSnooze: (Int) -> Void
     let onDismiss: () -> Void 
     
-    // Morph state
+    // Animation States
     @State private var isExpanded = false
     @State private var contentOpacity: Double = 0
+    @State private var dotStates: [Bool] = [false, false, false]
+    
+    // Safety flag for race conditions (snooze vs auto-dismiss)
+    @State private var isDismissing = false
     
     // Auto-dismiss state
     @State private var timeRemaining: CGFloat = 30 
@@ -16,26 +20,33 @@ struct NotificationBannerView: View {
     
     // Action to start the reverse morphing
     func startDismissSequence() {
-        withAnimation(.easeOut(duration: 0.2)) {
+        guard !isDismissing else { return }
+        isDismissing = true
+        
+        withAnimation(.easeOut(duration: 0.3)) {
             contentOpacity = 0
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Shrink back
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                isExpanded = false
+                dotStates = [false, false, false]
             }
             
-            // Wait for shrink and slide down
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                onDismiss()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    isExpanded = false
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    onDismiss()
+                }
             }
         }
     }
     
     var body: some View {
         ZStack {
-            // Background Capsule
+            // 1. Background Capsule
             Capsule()
                 .fill(.ultraThinMaterial)
                 .frame(width: isExpanded ? 780 : 100, height: 100)
@@ -43,84 +54,94 @@ struct NotificationBannerView: View {
                     Capsule()
                         .strokeBorder(.white.opacity(0.15), lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 15)
+                .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 10)
             
-            // MAIN CONTENT LAYER
-            ZStack {
-                // 1. LEFT: Close (Invisible in circle)
-                HStack {
-                    if isExpanded {
-                        Button(action: startDismissSequence) {
-                            ZStack {
-                                Circle()
-                                    .stroke(Color.white.opacity(0.1), lineWidth: 3)
-                                
-                                Circle()
-                                    .trim(from: 0, to: timeRemaining / totalTime)
-                                    .stroke(Color.white.opacity(0.8), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                                    .rotationEffect(.degrees(-90))
-                                
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                            .frame(width: 56, height: 56)
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.opacity.combined(with: .scale))
-                    }
-                    
-                    // 2. MIDDLE: Info (Invisible in circle)
-                    if isExpanded {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("时间到")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white.opacity(0.6))
-                            
-                            Text(title.isEmpty ? "倒计时结束" : title)
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
+            // 2. Content Layer (Strictly laid out to prevent overlap)
+            HStack(spacing: 0) {
+                if isExpanded {
+                    // LEFT: Close
+                    Button(action: startDismissSequence) {
+                        ZStack {
+                            Circle()
+                                .stroke(Color.white.opacity(0.1), lineWidth: 3)
+                            Circle()
+                                .trim(from: 0, to: timeRemaining / totalTime)
+                                .stroke(Color.white.opacity(0.8), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                            Image(systemName: "xmark")
+                                .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
-                                .lineLimit(1)
                         }
-                        .padding(.leading, 20)
-                        .frame(maxWidth: 350, alignment: .leading)
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .frame(width: 56, height: 56)
                     }
+                    .buttonStyle(.plain)
+                    .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
+                    .padding(.leading, 40)
+                    .opacity(contentOpacity)
+                    
+                    // MIDDLE: Info
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("时间到")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                        Text(title.isEmpty ? "倒计时结束" : title)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                    }
+                    .padding(.leading, 24)
+                    .frame(maxWidth: 350, alignment: .leading)
+                    .opacity(contentOpacity)
+                    .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .opacity))
                     
                     Spacer()
-                    
-                    // 3. RIGHT: Snooze Buttons (Morphed Dots)
-                    HStack(spacing: isExpanded ? 16 : 8) {
-                        SnoozeButton(label: "+1m", isExpanded: isExpanded, action: { onSnooze(1) })
-                        SnoozeButton(label: "+5m", isExpanded: isExpanded, action: { onSnooze(5) })
-                        SnoozeButton(label: "+30m", isExpanded: isExpanded, action: { onSnooze(30) })
-                    }
-                    .frame(width: isExpanded ? nil : 100) // Center dots in the 100px circle
                 }
-                .padding(.horizontal, isExpanded ? 40 : 0)
-                .opacity(contentOpacity)
                 
-                // INITIAL DOTS (Overlayed when opacity is 0 or low)
-                if !isExpanded || contentOpacity < 0.5 {
-                    HStack(spacing: 8) {
-                        Circle().fill(.white).frame(width: 10, height: 10)
-                        Circle().fill(.white).frame(width: 10, height: 10)
-                        Circle().fill(.white).frame(width: 10, height: 10)
+                // RIGHT: Three Dots / Snooze Buttons
+                HStack(spacing: isExpanded ? 16 : 8) {
+                    MorphedSnoozeButton(label: "+1m", isActive: dotStates[0], isExpanded: isExpanded) {
+                        if !isDismissing {
+                            isDismissing = true
+                            onSnooze(1)
+                        }
                     }
-                    .opacity(1.0 - contentOpacity)
+                    MorphedSnoozeButton(label: "+5m", isActive: dotStates[1], isExpanded: isExpanded) {
+                        if !isDismissing {
+                            isDismissing = true
+                            onSnooze(5)
+                        }
+                    }
+                    MorphedSnoozeButton(label: "+30m", isActive: dotStates[2], isExpanded: isExpanded) {
+                        if !isDismissing {
+                            isDismissing = true
+                            onSnooze(30)
+                        }
+                    }
                 }
+                .padding(.trailing, isExpanded ? 40 : 0)
+                .frame(width: isExpanded ? nil : 100) // Keep them centered when collapsed
             }
             .frame(width: isExpanded ? 780 : 100, height: 100)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 25) // Breathing room for shadow at the top
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                     isExpanded = true
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    withAnimation(.easeIn(duration: 0.3)) {
+                let delay = 0.2
+                for i in 0..<3 {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay + Double(i) * 0.1) {
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                            dotStates[i] = true
+                        }
+                    }
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    withAnimation(.easeIn(duration: 0.4)) {
                         contentOpacity = 1
                     }
                 }
@@ -136,33 +157,48 @@ struct NotificationBannerView: View {
     }
 }
 
-struct SnoozeButton: View {
+struct MorphedSnoozeButton: View {
     let label: String
-    let isExpanded: Bool
+    let isActive: Bool      
+    let isExpanded: Bool   
     let action: () -> Void
     @State private var isHovering = false
     
     var body: some View {
         Button(action: action) {
-            Text(label)
-                .font(.system(size: 18, weight: .medium, design: .rounded))
-                .foregroundColor(isHovering ? .white : .white.opacity(0.8))
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(
-                    Capsule()
-                        .fill(isHovering ? Color.white.opacity(0.2) : Color.white.opacity(0.1))
-                )
-                .overlay(
-                    Capsule().strokeBorder(.white.opacity(0.1), lineWidth: 1)
-                )
-                .scaleEffect(isExpanded ? 1.0 : 0.5)
-                .opacity(isExpanded ? 1.0 : 0)
+            ZStack {
+                // Background Layer (Dot or Capsule)
+                Capsule()
+                    .fill(isActive ? (isHovering ? Color.white.opacity(0.2) : Color.white.opacity(0.1)) : Color.white)
+                    // CRITICAL: Set fixed height to prevent "Giant Capsule" bug
+                    .frame(width: isActive ? nil : 12, height: isActive ? 44 : 12)
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(.white.opacity(isActive ? 0.1 : 0), lineWidth: 1)
+                            .frame(height: isActive ? 44 : 12)
+                    )
+                
+                // Content Layer
+                if isActive {
+                    Text(label)
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(isHovering ? .white : .white.opacity(0.8))
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .transition(.scale(scale: 0.5).combined(with: .opacity))
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(height: 44) // Constant height for hit testing
+            .scaleEffect(isActive ? 1.0 : (isExpanded ? 1.2 : 0.8))
         }
         .buttonStyle(.plain)
+        .disabled(!isActive || !isExpanded)
         .onHover { hover in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                isHovering = hover
+            if isActive && isExpanded {
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    isHovering = hover
+                }
             }
         }
     }
