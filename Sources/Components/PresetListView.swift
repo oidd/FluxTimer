@@ -18,11 +18,6 @@ struct PresetListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(Array(presets.enumerated()), id: \.element.id) { index, preset in
-                // Tiered Opacity Calculation for 'Peek' Mode
-                // 1st (idx 0): 50%
-                // 2nd (idx 1): 10% fading to 0% at bottom
-                // 3rd+ (idx 2+): 0%
-                let rowOpacity: Double = isFullVisibility ? 1.0 : (index == 0 ? 0.5 : (index == 1 ? 1.0 : 0.0))
                 
                 Button(action: { onSelect(preset) }) {
                     HStack {
@@ -43,8 +38,8 @@ struct PresetListView: View {
                         
                         Spacer()
                         
-                        // Delete Button (Visible on Hover in Full Mode)
-                        if isFullVisibility && hoveredPresetID == preset.id {
+                        // Delete Button (Visible on Hover)
+                        if hoveredPresetID == preset.id {
                             Button(action: {
                                 onDelete(preset)
                             }) {
@@ -66,38 +61,22 @@ struct PresetListView: View {
                 }
                 .buttonStyle(.plain)
                 .onHover { hover in
-                    if isFullVisibility { // Only track internal hover if fully visible
-                        if hover {
-                            hoveredPresetID = preset.id
-                        } else if hoveredPresetID == preset.id {
-                            hoveredPresetID = nil
-                        }
+                    if hover {
+                        hoveredPresetID = preset.id
+                    } else if hoveredPresetID == preset.id {
+                        hoveredPresetID = nil
                     }
                 }
-                .disabled(!isFullVisibility && index >= 2) // Disable hidden items
-                .opacity(isVisible ? rowOpacity : 0)
-                // Specific Gradient Mask for the 2nd Item in Peek Mode
-                .mask {
-                    if !isFullVisibility && index == 1 {
-                        LinearGradient(
-                            stops: [
-                                .init(color: .white.opacity(0.1), location: 0),
-                                .init(color: .white.opacity(0.0), location: 1.0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    } else {
-                        Color.white
-                    }
-                }
+                .disabled(!isVisible)
+                .opacity(isVisible ? 1.0 : 0)
                 .offset(y: isVisible ? 0 : -15)
                 .animation(
                     .spring(response: 0.3, dampingFraction: 0.8)
-                    .delay(isVisible ? Double(index) * 0.05 : 0), 
+                    .delay(isVisible ? 
+                           Double(index) * 0.05 : 
+                           Double(presets.count - 1 - index) * 0.05), 
                     value: isVisible
                 )
-                .animation(.easeInOut(duration: 0.2), value: isFullVisibility)
             }
         }
         .frame(width: 160)

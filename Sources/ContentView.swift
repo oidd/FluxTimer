@@ -24,8 +24,7 @@ struct ContentView: View {
     @State private var minutes: Int = 0
     @State private var timerTitle: String = ""
     @State private var isDragging = false
-    @State private var isHovering = false
-    @State private var isHoveringPresetsArea = false // New state for 'Peek' effect
+    @State private var showPresets = false // Sequenced waterfall state
     
     // MULTI-TIMER STATE
     @State private var runningTimers: [RunningTimer] = []
@@ -37,32 +36,10 @@ struct ContentView: View {
         TimerPreset(minutes: 3, title: "泡面")
     ]
     
-    // DEBOUNCE LOGIC
-    @State private var hoverWorkItem: DispatchWorkItem?
-    
     // Timer
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
     private let dragLogic = DragLogic()
-    
-    // Helper for Debounce
-    func scheduleHoverClose() {
-        hoverWorkItem?.cancel()
-        let item = DispatchWorkItem {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovering = false
-            }
-        }
-        hoverWorkItem = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: item)
-    }
-    
-    func cancelHoverClose() {
-        hoverWorkItem?.cancel()
-        withAnimation(.easeInOut(duration: 0.2)) {
-            isHovering = true
-        }
-    }
     
     var body: some View {
         // ROOT CANVAS: 800x600 Fixed
@@ -111,12 +88,27 @@ struct ContentView: View {
                     
                     ClickDraggableButton(action: {
                         DispatchQueue.main.async {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                if appState == .idle {
+                            if appState == .idle {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                     appState = .setting
                                     minutes = 0
-                                } else {
-                                    appState = .idle
+                                }
+                                // Expand Waterfall stage 2
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                        showPresets = true
+                                    }
+                                }
+                            } else {
+                                // Collapse Waterfall stage 1
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                    showPresets = false
+                                }
+                                // Collapse stage 2
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                        appState = .idle
+                                    }
                                 }
                             }
                         }
@@ -125,75 +117,54 @@ struct ContentView: View {
                     }
                 }
                 .frame(width: 50, height: 50)
-                .onHover { hover in
-                     if hover { cancelHoverClose() } else { scheduleHoverClose() }
-                }
-                
-                // PRESET LIST (Connected below)
-                if appState == .idle && isHovering {
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(width: 50, height: 6) // Reduced gap to 6px
-                        .onHover { hover in
-                            if hover { cancelHoverClose() } else { scheduleHoverClose() }
-                        }
-                    
-                    PresetListView(
-                        isVisible: isHovering, 
-                        isFullVisibility: isHoveringPresetsArea, // Pass tiered visibility state
-                        presets: $savedPresets,
-                        onSelect: { preset in
-                            self.minutes = preset.minutes
-                            self.timerTitle = preset.title
-                            startNewTimer()
-                        },
-                        onDelete: { preset in
-                            deletePreset(preset)
-                        }
-                    )
-                    .transition(.opacity.animation(.easeInOut(duration: 0.2)))
-                    .onHover { hover in
-                        if hover { 
-                            cancelHoverClose()
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isHoveringPresetsArea = true // Show all fully
-                            }
-                        } else { 
-                            scheduleHoverClose()
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                isHoveringPresetsArea = false // Show tiered 'peek'
-                            }
-                        }
-                    }
-                }
             }
             .offset(x: 375, y: 50)
             .zIndex(100) // Topmost
             
             // 3. RIGHT WING (Capsule)
             // Starts at x = 437 (425 + 12)
-            ZStack(alignment: .leading) {
+            ZStack(alignment: .topLeading) {
                 if appState == .setting || isDragging {
-                    DragCapsuleView(
-                        minutes: $minutes,
-                        isDragging: $isDragging,
-                        title: $timerTitle,
-                        dragChanged: { translation in
-                            self.minutes = dragLogic.minutes(for: translation)
-                        },
-                        dragEnded: {
-                        },
-                        onCommit: {
-                            if minutes > 0 {
-                                startNewTimer()
+                    VStack(alignment: .leading, spacing: 5) {
+                        DragCapsuleView(
+                            minutes: $minutes,
+                            isDragging: $isDragging,
+                            title: $timerTitle,
+                            dragChanged: { translation in
+                                self.minutes = dragLogic.minutes(for: translation)
+                            },
+                            dragEnded: {
+                            },
+                            onCommit: {
+                                if minutes > 0 {
+                                    startNewTimer()
+                                }
+                            },
+                            onFavorite: {
+                                savePreset()
                             }
-                        },
-                        onFavorite: {
-                            savePreset()
-                        }
-                    )
-                    // Grow from Left (Button side)
-                    .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
+                        )
+                        // Grow from Left (Button side)
+                        .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
+                        
+                        // PRESET LIST (Now specifically shown under the capsule)
+                        PresetListView(
+                            isVisible: showPresets, 
+                            isFullVisibility: true, 
+                            presets: $savedPresets,
+                            onSelect: { preset in
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                    self.minutes = preset.minutes
+                                    self.timerTitle = preset.title
+                                    startNewTimer()
+                                }
+                            },
+                            onDelete: { preset in
+                                deletePreset(preset)
+                            }
+                        )
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                 }
             }
             .offset(x: 437, y: 50)
@@ -240,12 +211,19 @@ struct ContentView: View {
             title: timerTitle
         )
         
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-            runningTimers.append(newTimer)
-            appState = .idle
-            minutes = 0
-            timerTitle = ""
-            isDragging = false 
+        // Collapse sequence
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showPresets = false
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                runningTimers.append(newTimer)
+                appState = .idle
+                minutes = 0
+                timerTitle = ""
+                isDragging = false 
+            }
         }
     }
     
@@ -275,7 +253,12 @@ struct ContentView: View {
     
     func reset() {
         withAnimation {
-            appState = .idle
+            showPresets = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation {
+                appState = .idle
+            }
         }
     }
     
