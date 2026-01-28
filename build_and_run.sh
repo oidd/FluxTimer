@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-APP_NAME="LiquidTimer"
+APP_NAME="FluxTimer"
 SOURCES_DIR="Sources"
 BUILD_DIR=".build/release"
 APP_BUNDLE="$APP_NAME.app"
@@ -28,6 +28,8 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<EOF
     <string>$APP_NAME</string>
     <key>CFBundleIdentifier</key>
     <string>com.example.$APP_NAME</string>
+    <key>CFBundleDisplayName</key>
+    <string>流光倒计时</string>
     <key>CFBundleName</key>
     <string>$APP_NAME</string>
     <key>CFBundlePackageType</key>

@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 @main
-struct LiquidTimerApp: App {
+struct FluxTimerApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     
     var body: some Scene {

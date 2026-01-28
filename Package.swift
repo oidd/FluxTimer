@@ -2,16 +2,16 @@
 import PackageDescription
 
 let package = Package(
-    name: "LiquidTimer",
+    name: "FluxTimer",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "LiquidTimer", targets: ["LiquidTimer"])
+        .executable(name: "FluxTimer", targets: ["FluxTimer"])
     ],
     targets: [
         .executableTarget(
-            name: "LiquidTimer",
+            name: "FluxTimer",
             path: "Sources"
         )
     ]

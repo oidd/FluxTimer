@@ -3,7 +3,7 @@ import Foundation
 class PersistenceManager {
     static let shared = PersistenceManager()
     
-    private let folderName = "倒计时"
+    private let folderName = "Flux Timer"
     private let fileName = "presets.json"
     
     private var fileURL: URL? {

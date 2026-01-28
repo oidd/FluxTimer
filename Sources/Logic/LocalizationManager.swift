@@ -52,8 +52,8 @@ class LocalizationManager {
             "en": "Custom"
         ],
         "倒计时": [
-            "zh": "倒计时",
-            "en": "Timer"
+            "zh": "流光倒计时",
+            "en": "Flux Timer"
         ],
         "1m 测试": [
             "zh": "1m 测试",
