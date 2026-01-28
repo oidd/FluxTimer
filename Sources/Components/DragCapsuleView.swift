@@ -1,47 +1,69 @@
 import SwiftUI
 
-struct SmileShape: Shape {
+struct BookmarkShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
+        let w = rect.width
+        let h = rect.height
+        let notchH = h * 0.22
         
-        // QuadCurve for better control over "Flatness" and "Height"
-        // Frame is 22x22
-        
-        // 1. Position (Higher)
-        // Previous Arc was y ~ 15 to 19.
-        // Let's move start points up to y ~ 12.
-        let startY = rect.midY + 1 // y ~ 12
-        // NARROWER: Increase inset from 4 to 6.
-        let startX = rect.minX + 6 
-        let endX = rect.maxX - 6
-        
-        // 2. Curvature (Less Curved)
-        // Control point determines depth.
-        // Adjusted slightly to keep it gentle with narrower width.
-        let controlY = rect.midY + 4
-        
-        path.move(to: CGPoint(x: startX, y: startY))
-        path.addQuadCurve(to: CGPoint(x: endX, y: startY),
-                          control: CGPoint(x: rect.midX, y: controlY))
-        
+        path.move(to: .zero)
+        path.addLine(to: CGPoint(x: w, y: 0))
+        path.addLine(to: CGPoint(x: w, y: h))
+        path.addLine(to: CGPoint(x: w/2, y: h - notchH))
+        path.addLine(to: CGPoint(x: 0, y: h))
+        path.closeSubpath()
         return path
     }
+}
+
+struct BookmarkParticle: Identifiable {
+    let id = UUID()
+    let x: CGFloat
+    let y: CGFloat
+    let scale: CGFloat
+    let delay: Double
 }
 
 struct DragCapsuleView: View {
     @Binding var minutes: Int
     @Binding var isDragging: Bool
     @Binding var title: String
+    var isFavorite: Bool // Driven by ContentView
     var dragChanged: (CGFloat) -> Void
     var dragEnded: () -> Void
     var onCommit: () -> Void
-    var onFavorite: () -> Void
+    var onFavoriteToggle: () -> Void // Renamed to clarify toggle
+    
+    // Explicit init
+    init(minutes: Binding<Int>, 
+         isDragging: Binding<Bool>, 
+         title: Binding<String>, 
+         isFavorite: Bool,
+         dragChanged: @escaping (CGFloat) -> Void, 
+         dragEnded: @escaping () -> Void, 
+         onCommit: @escaping () -> Void, 
+         onFavoriteToggle: @escaping () -> Void) {
+        self._minutes = minutes
+        self._isDragging = isDragging
+        self._title = title
+        self.isFavorite = isFavorite
+        self.dragChanged = dragChanged
+        self.dragEnded = dragEnded
+        self.onCommit = onCommit
+        self.onFavoriteToggle = onFavoriteToggle
+    }
     
     @State private var dragOffset: CGFloat = 0
-    @State private var isFavorite: Bool = false
     
-    // MICRO ANIMATION STATE
-    @State private var smileOffset: CGFloat = 0
+    // PARTICLE & BURST STATE
+    @State private var particles: [BookmarkParticle] = []
+    @State private var showBurst = false
+    @State private var particleOpacity: Double = 0
+    @State private var burstScale: CGFloat = 0
+    @State private var burstOpacity: Double = 0
+    @State private var iconScale: CGFloat = 1.0
+    @State private var iconRotation: Double = 0
     
     // SPACER MEMORY
     @State private var restingWidth: CGFloat = 0
@@ -56,11 +78,11 @@ struct DragCapsuleView: View {
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .padding(.horizontal, 10)
-                .padding(.vertical, 12) // TALLER: ~44px height (Vs 50px container)
+                .padding(.vertical, 12) 
                 .background(Capsule().fill(.white.opacity(0.2)))
-                .scaleEffect(x: 1.0 + (isDragging ? min(0.02, dragOffset / 3000) : 0), // MICRO: Very subtle X expansion
-                             y: 1.0 - (isDragging ? min(0.04, dragOffset / 2000) : 0)) // MICRO: Subtle Y shrink
-                .padding(.leading, 4) // Reduce leading margin slightly to balance
+                .scaleEffect(x: 1.0 + (isDragging ? min(0.02, dragOffset / 3000) : 0),
+                             y: 1.0 - (isDragging ? min(0.04, dragOffset / 2000) : 0))
+                .padding(.leading, 4)
                 .fixedSize()
             
             Divider()
@@ -82,7 +104,7 @@ struct DragCapsuleView: View {
             Spacer(minLength: 0)
                 .frame(width: max(0, restingWidth + (isDragging ? dampedDelta(dragOffset) : 0)))
             
-            // Morphing Handle / Star
+            // Morphing Handle / Bookmark
             ZStack {
                 // Hit Area
                 Color.white.opacity(0.001) 
@@ -90,34 +112,47 @@ struct DragCapsuleView: View {
                     .contentShape(Rectangle())
                 
                 if minutes > 0 && !isDragging {
-                    // STAR STATE
+                    // BOOKMARK STATE
                     ZStack {
-                        // 1. BASE: HOLLOW CUSTOM STAR (Always Visible)
-                        if let nsImage = NSImage(contentsOfFile: "/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/icons/五角星.svg") {
-                            Image(nsImage: nsImage)
-                                .resizable()
-                                .renderingMode(.template) 
-                                .foregroundColor(.white)
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 22, height: 22)
-                                .shadow(color: .black.opacity(0.2), radius: 1, x: 0, y: 1)
-                        } else {
-                            Image(systemName: "star")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
+                        // 1. BURST PARTICLES
+                        ForEach(particles) { particle in
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 5, height: 5)
+                                .blur(radius: 0.5)
+                                .offset(x: showBurst ? particle.x : 0, y: showBurst ? particle.y : 0)
+                                .scaleEffect(showBurst ? particle.scale : 0.01)
+                                .opacity(particleOpacity)
                         }
-
-                        // 2. FAVORITE: YELLOW SMILE CURVE (Overlay)
-                        if isFavorite {
-                            SmileShape()
-                                .stroke(style: StrokeStyle(lineWidth: 3, lineCap: .round)) // THICKER (3)
-                                .foregroundColor(.yellow)
-                                .frame(width: 22, height: 22)
-                                // MICRO-ANIMATION: Left-Right Sway
-                                .offset(x: smileOffset)
+                        
+                        // 2. RADIAL GLOW FLASH
+                        Circle()
+                            .fill(RadialGradient(colors: [.white.opacity(0.6), .clear], center: .center, startRadius: 0, endRadius: 15))
+                            .frame(width: 34, height: 34)
+                            .scaleEffect(burstScale)
+                            .opacity(burstOpacity)
+                        
+                        // 3. ICON (Custom Shorter Bookmark)
+                        ZStack {
+                            BookmarkShape()
+                                .stroke(style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
+                                .foregroundColor(.white.opacity(0.6))
+                                .frame(width: 11, height: 14)
+                            
+                            BookmarkShape()
+                                .fill(.white)
+                                .frame(width: 11, height: 14)
+                                .opacity(isFavorite ? 1 : 0)
                         }
+                        .scaleEffect(iconScale)
+                        .rotationEffect(.degrees(iconRotation))
                     }
                     .transition(.opacity)
+                    .onChange(of: isFavorite) { newValue in
+                        if newValue {
+                            triggerBurst()
+                        }
+                    }
                     
                 } else {
                     // HANDLE STATE
@@ -143,14 +178,7 @@ struct DragCapsuleView: View {
             // Tap to Save
             .onTapGesture {
                 if minutes > 0 && !isDragging {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        isFavorite.toggle()
-                    }
-                     if isFavorite {
-                         onFavorite()
-                         // TRIGGER MICRO-ANIMATION
-                         triggerSmileShake()
-                     }
+                    onFavoriteToggle()
                 }
             }
             // Drag to Edit
@@ -161,76 +189,33 @@ struct DragCapsuleView: View {
                              NSCursor.closedHand.push()
                         }
                         isDragging = true 
-                        isFavorite = false 
-                        smileOffset = 0 // Reset animation
                         dragOffset = value.translation.width
                         dragChanged(value.translation.width)
                     }
                     .onEnded { _ in
-                        // SPRING BACK LOGIC: Do NOT update restingWidth.
-                        // restingWidth = max(0, restingWidth + currentDelta) // REMOVED
-                        
-                        // We need to animate the spring back.
-                        // However, dragOffset is tied to Gesture state which might reset instantly.
-                        // But since we use @State dragOffset, we can control it.
-                        // Let's set isDragging false immediately (to show handle/star), 
-                        // but we rely on dragOffset for the Spacer width.
-                        
-                        let currentOffset = dragOffset
-                        isDragging = false // This switches visuals back to normal mode
-                        
-                        // Manually animate Spacer back to 0
-                        // Since isDragging is false, the spacer logic:
-                        // width = restingWidth + (isDragging ? ... : 0)
-                        // This immediately cuts to restingWidth (0).
-                        
-                        // To allow animation, we might need to keep using dragOffset visually for a moment?
-                        // Actually, SwiftUI transitions might handle it?
-                        // No, Spacer width is explicit.
-                        
-                        // Let's rely on SwiftUI animation system.
-                        // The `dampedDelta` is only used when `isDragging`.
-                        // If we set isDragging to false, width jumps to `restingWidth` (0).
-                        // If we want it to animate, we should probably animate `restingWidth`?
-                        // Or just update body to use an animated value?
-                        
-                        // SIMPLE FIX: Just `withAnimation(.spring) { isDragging = false; dragOffset = 0 }`?
-                        // DragGesture finishes, we must manually reset state.
-                        
                         withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) { 
                              dragOffset = 0
-                             // Note: isDragging is monitored by view updates.
-                             // Modifying isDragging inside withAnimation should animate the Spacer width change (from X to 0).
                         }
-                        
-                         isDragging = false // Set state
-                        
+                        isDragging = false 
                         NSCursor.pop()
                         dragEnded()
                     }
             )
         }
         .frame(height: 50)
-        // Vertical Squeeze
-        // REMOVED: .scaleEffect(x: 1.0, y: squeezeScale(dragOffset))
-        
         .background(.ultraThinMaterial)
-        // INNER STROKE TRICK:
-        // 1. Draw 2px stroke (1px in, 1px out)
         .overlay(
             BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0)
                 .stroke(.white.opacity(0.2), lineWidth: 2)
         )
-        // 2. Clip the whole view to shape, adjusting the outer 1px
         .clipShape(BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0))
         .fixedSize(horizontal: true, vertical: false)
         .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
-        // PREDICTION CAPSULE OVERLAY
         .overlay(alignment: .topLeading) {
             if minutes > 0 {
                 TimelineView(.periodic(from: .now, by: 1.0)) { context in
                     let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
-                    let timeString = endDate.formatted(date: .omitted, time: .standard) // HH:mm:ss
+                    let timeString = endDate.formatted(date: .omitted, time: .standard)
                     
                     Text("预计 \(timeString) 结束计时")
                         .font(.system(size: 11, weight: .medium, design: .rounded))
@@ -246,23 +231,63 @@ struct DragCapsuleView: View {
                                     Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
                                 )
                         )
-                        .offset(y: -24) // Floating above snugly
+                        .offset(y: -24)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
         }
     }
     
-    // Shake Logic
-    private func triggerSmileShake() {
-        // A simple 3-step shake
-        // 0 -> -2 -> 2 -> -1 -> 1 -> 0
-        let duration = 0.1
-        withAnimation(Animation.linear(duration: duration)) { smileOffset = -2 }
-        withAnimation(Animation.linear(duration: duration).delay(duration)) { smileOffset = 2 }
-        withAnimation(Animation.linear(duration: duration).delay(duration * 2)) { smileOffset = -1 }
-        withAnimation(Animation.linear(duration: duration).delay(duration * 3)) { smileOffset = 1 }
-        withAnimation(Animation.linear(duration: duration).delay(duration * 4)) { smileOffset = 0 }
+    // MARK: - Burst Logic
+    
+    private func triggerBurst() {
+        // Reset state
+        showBurst = false
+        burstScale = 0
+        burstOpacity = 0
+        particles = []
+        
+        // Icon Animation (Ported from icon.tapActive/tapCompleted)
+        iconRotation = -15
+        iconScale = 0.85
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+            iconRotation = 0
+            iconScale = 1.2 // Slight overshoot expansion on save
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                iconScale = 1.1 // Resting favorite scale
+            }
+        }
+        
+        // Generate Particles (Physics-based Distribution)
+        var newParticles: [BookmarkParticle] = []
+        let particleCount = 6
+        for i in 0..<particleCount {
+            let angle = (CGFloat(i) / CGFloat(particleCount)) * (2.0 * .pi)
+            let radius = 24.0 + CGFloat.random(in: 0...10)
+            let x = cos(angle) * radius
+            let y = sin(angle) * radius * 0.75
+            let scale = 0.8 + CGFloat.random(in: 0...0.5)
+            newParticles.append(BookmarkParticle(x: x, y: y, scale: scale, delay: Double(i) * 0.04))
+        }
+        self.particles = newParticles
+        
+        // Execute Animations
+        withAnimation(.easeOut(duration: 0.5)) {
+            burstScale = 1.4
+            burstOpacity = 0.4
+        }
+        withAnimation(.easeIn(duration: 0.4).delay(0.2)) {
+            burstOpacity = 0
+        }
+        
+        // NEW: Flash and then fade particles while they fly
+        particleOpacity = 1.0 
+        withAnimation(.easeOut(duration: 0.8)) {
+            showBurst = true
+            particleOpacity = 0
+        }
     }
     
     // Damped Delta

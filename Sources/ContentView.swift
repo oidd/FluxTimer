@@ -168,6 +168,7 @@ struct ContentView: View {
                             minutes: $minutes,
                             isDragging: $isDragging,
                             title: $timerTitle,
+                            isFavorite: savedPresets.contains { $0.minutes == minutes && $0.title == (timerTitle.isEmpty ? "自定义" : timerTitle) },
                             dragChanged: { translation in
                                 self.minutes = dragLogic.minutes(for: translation)
                             },
@@ -178,8 +179,8 @@ struct ContentView: View {
                                     startNewTimer()
                                 }
                             },
-                            onFavorite: {
-                                savePreset()
+                            onFavoriteToggle: {
+                                togglePreset()
                             }
                         )
                         .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
@@ -298,12 +299,18 @@ struct ContentView: View {
         }
     }
     
-    func savePreset() {
+    func togglePreset() {
         guard minutes > 0 else { return }
-        let isDuplicate = savedPresets.contains { $0.minutes == minutes && $0.title == timerTitle }
+        let effectiveTitle = timerTitle.isEmpty ? "自定义" : timerTitle
         
-        if !isDuplicate {
-            let newPreset = TimerPreset(minutes: minutes, title: timerTitle.isEmpty ? "自定义" : timerTitle)
+        if let index = savedPresets.firstIndex(where: { $0.minutes == minutes && $0.title == effectiveTitle }) {
+            // Un-favorite: Remove matching preset
+            withAnimation {
+                savedPresets.remove(at: index)
+            }
+        } else {
+            // Favorite: Add new preset
+            let newPreset = TimerPreset(minutes: minutes, title: effectiveTitle)
             withAnimation {
                 savedPresets.append(newPreset)
             }
