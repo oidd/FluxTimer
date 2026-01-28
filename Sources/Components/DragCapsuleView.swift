@@ -125,7 +125,7 @@ struct DragCapsuleView: View {
             }
             .padding(.horizontal, 14) // Tighter look
             .padding(.vertical, 10)   // Balanced vertical
-            .background(Capsule().fill(.white.opacity(0.2)))
+            .background(RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous).fill(.white.opacity(0.2)))
             .padding(.leading, 4)     // Shifted left
             .fixedSize()
             .onChange(of: isFavorite) { newValue in
@@ -328,10 +328,10 @@ struct BoneCapsuleShape: Shape {
     }
     
     func path(in rect: CGRect) -> Path {
-        // OPTIMIZATION: Use System Capsule Path when idle (offset == 0)
-        // This ensures perfect antialiasing matching the Preset list.
+        // OPTIMIZATION: Use System RoundedRectangle Path when idle (offset == 0)
+        // Using 0.42 ratio for the superellipse look.
         if abs(dragOffset) < 1 {
-            return Path(roundedRect: rect, cornerRadius: rect.height / 2)
+            return Path(roundedRect: rect, cornerRadius: rect.height * 0.42, style: .continuous)
         }
         
         var path = Path()

@@ -50,7 +50,7 @@ struct NotificationBannerView: View {
             // 1. Background Layer (Back)
             ZStack {
                 // Main Material
-                Capsule()
+                RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous)
                     .fill(.ultraThinMaterial)
                 
                 // GALACTIC STARFIELD SWEEP
@@ -60,15 +60,15 @@ struct NotificationBannerView: View {
                         let progress = (date.remainder(dividingBy: 6.0) + 3.0) / 6.0 
                         StarfieldView(width: 780, height: 100, sweepProgress: progress)
                     }
-                    .mask(Capsule().fill(.white))
+                    .mask(RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous).fill(.white))
                 }
                 
                 // Static Subtle Border
-                Capsule()
+                RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous)
                     .strokeBorder(.white.opacity(0.15), lineWidth: 1)
             }
             .frame(width: isExpanded ? 780 : 100, height: 100)
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous))
             .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 10)
             .drawingGroup() 
             
@@ -184,12 +184,12 @@ struct MorphedSnoozeButton: View {
         Button(action: action) {
             ZStack {
                 // Background Layer (Dot or Capsule)
-                Capsule()
+                RoundedRectangle(cornerRadius: (isActive ? 44 : 12) * 0.42, style: .continuous)
                     .fill(isActive ? (isHovering ? Color.white.opacity(0.2) : Color.white.opacity(0.1)) : Color.white)
                     // CRITICAL: Set fixed height to prevent "Giant Capsule" bug
                     .frame(width: isActive ? nil : 12, height: isActive ? 44 : 12)
                     .overlay(
-                        Capsule()
+                        RoundedRectangle(cornerRadius: (isActive ? 44 : 12) * 0.42, style: .continuous)
                             .strokeBorder(.white.opacity(isActive ? 0.1 : 0), lineWidth: 1)
                             .frame(height: isActive ? 44 : 12)
                     )

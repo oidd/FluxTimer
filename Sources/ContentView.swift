@@ -74,10 +74,10 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // BUTTON
                 ZStack {
-                    Circle()
+                    RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous)
                         .fill(.ultraThinMaterial)
                         .frame(width: 50, height: 50)
-                        .overlay(Circle().strokeBorder(.white.opacity(0.2), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous).strokeBorder(.white.opacity(0.2), lineWidth: 1))
                         .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                     
                     ZStack {
@@ -137,7 +137,7 @@ struct ContentView: View {
                     }
                     .allowsHitTesting(false)
                 )
-                .clipShape(Circle()) // Apply clip AFTER overlay
+                .clipShape(RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous)) // Apply clip AFTER overlay
                 .onHover { hovering in
                     if hovering {
                         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {

@@ -54,9 +54,9 @@ struct PresetListView: View {
                     }
                     .padding(4)
                     .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
+                    .clipShape(RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous))
                     .overlay(
-                        Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous).strokeBorder(.white.opacity(0.2), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
