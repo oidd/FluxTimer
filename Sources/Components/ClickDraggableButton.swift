@@ -44,10 +44,31 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         var action: (() -> Void)?
         private var startLocation: NSPoint?
         private var hasDragged = false
+        private var trackingArea: NSTrackingArea?
+        
+        override func updateTrackingAreas() {
+            if let existing = trackingArea {
+                removeTrackingArea(existing)
+            }
+            
+            let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways, .inVisibleRect]
+            trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+            addTrackingArea(trackingArea!)
+            super.updateTrackingAreas()
+        }
+        
+        override func mouseEntered(with event: NSEvent) {
+            // AUTO-ACTIVATE: As soon as the mouse touches the button, bring app to front!
+            NSApp.activate(ignoringOtherApps: true)
+            self.window?.makeKeyAndOrderFront(nil)
+        }
         
         override func acceptsFirstMouse(for event: NSEvent?) -> Bool { return true }
         
         override func mouseDown(with event: NSEvent) {
+            // Redundant but safe: Ensure focus again on click
+            self.window?.makeKeyAndOrderFront(nil)
+            
             startLocation = event.locationInWindow
             hasDragged = false
         }

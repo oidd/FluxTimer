@@ -12,6 +12,12 @@ struct LiquidTimerApp: App {
     }
 }
 
+class ClickThroughHostingView<Content: View>: NSHostingView<Content> {
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+        return true
+    }
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     var floatingPanel: FloatingPanel?
     
@@ -20,12 +26,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView()
         
         floatingPanel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 400), // Increased size to prevent clipping during animation
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600), // Matched ContentView frame
             backing: .buffered,
             defer: false
         )
         
-        floatingPanel?.contentView = NSHostingView(rootView: contentView)
+        floatingPanel?.contentView = ClickThroughHostingView(rootView: contentView)
         floatingPanel?.center() // Center on screen initially
         floatingPanel?.makeKeyAndOrderFront(nil)
     }
