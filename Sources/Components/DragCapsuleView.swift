@@ -238,11 +238,12 @@ struct DragCapsuleView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 3)
                         .background(
-                            Capsule()
+                            RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
                                 .fill(.ultraThinMaterial)
                                 .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                                 .overlay(
-                                    Capsule().strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+                                    RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
+                                        .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
                                 )
                         )
                         .offset(y: -24)
@@ -327,43 +328,9 @@ struct BoneCapsuleShape: Shape {
     }
     
     func path(in rect: CGRect) -> Path {
-        // OPTIMIZATION: Use System RoundedRectangle Path when idle (offset == 0)
-        // Using 0.42 ratio for the superellipse look.
-        if abs(dragOffset) < 1 {
-            return Path(roundedRect: rect, cornerRadius: rect.height * 0.42, style: .continuous)
-        }
-        
-        var path = Path()
-        
-        // Fixed radius for the ends
-        let radius: CGFloat = 25 
-        let w = rect.width
-        let h = rect.height
-        
-        // Standard Capsule Shape (No Squeeze)
-        
-        // Top Edge
-        path.move(to: CGPoint(x: radius, y: 0))
-        path.addLine(to: CGPoint(x: w - radius, y: 0))
-        
-        // Right Arc
-        path.addArc(center: CGPoint(x: w - radius, y: radius),
-                    radius: radius,
-                    startAngle: .degrees(-90),
-                    endAngle: .degrees(90),
-                    clockwise: false)
-        
-        // Bottom Edge
-        path.addLine(to: CGPoint(x: radius, y: h))
-        
-        // Left Arc
-        path.addArc(center: CGPoint(x: radius, y: radius),
-                    radius: radius,
-                    startAngle: .degrees(90),
-                    endAngle: .degrees(270),
-                    clockwise: false)
-        
-        path.closeSubpath()
-        return path
+        // Uniform use of native RoundedRectangle with .continuous style (0.42 ratio).
+        // Since the parent view's width scales, this path will stretch proportionally
+        // while maintaining perfectly stable vertical curvature.
+        return Path(roundedRect: rect, cornerRadius: rect.height * 0.42, style: .continuous)
     }
 }
