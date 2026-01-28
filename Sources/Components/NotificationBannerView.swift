@@ -47,37 +47,20 @@ struct NotificationBannerView: View {
     
     var body: some View {
         ZStack {
-            // 1. Background Layer with Masked Rotating Glow
+            // 1. Background Layer (Back)
             ZStack {
                 // Main Material
                 Capsule()
                     .fill(.ultraThinMaterial)
                 
-                // MASKED ROTATING GLOW (Strictly follows the border)
+                // GALACTIC STARFIELD SWEEP
                 if isExpanded && contentOpacity > 0.5 {
-                    AngularGradient(
-                        gradient: Gradient(stops: [
-                            .init(color: .clear, location: 0.0),
-                            .init(color: .white.opacity(0.8), location: 0.1), // Beam 1
-                            .init(color: .clear, location: 0.2),
-                            .init(color: .clear, location: 0.5),
-                            .init(color: .white.opacity(0.8), location: 0.6), // Beam 2
-                            .init(color: .clear, location: 0.7),
-                            .init(color: .clear, location: 1.0)
-                        ]),
-                        center: .center
-                    )
-                    .rotationEffect(.degrees(rotation))
-                    .mask(
-                        Capsule()
-                            .stroke(lineWidth: 3) // Light only exists on this 3px border
-                    )
-                    .blur(radius: 1.5)
-                    .onAppear {
-                        withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
-                            rotation = 360
-                        }
+                    TimelineView(.animation) { timeline in
+                        let date = timeline.date.timeIntervalSinceReferenceDate
+                        let progress = (date.remainder(dividingBy: 6.0) + 3.0) / 6.0 
+                        StarfieldView(width: 780, height: 100, sweepProgress: progress)
                     }
+                    .mask(Capsule().fill(.white))
                 }
                 
                 // Static Subtle Border
@@ -89,7 +72,7 @@ struct NotificationBannerView: View {
             .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 10)
             .drawingGroup() 
             
-            // 2. Content Layer
+            // 2. Content Layer (Front)
             HStack(spacing: 0) {
                 if isExpanded {
                     // LEFT: Close
@@ -157,6 +140,7 @@ struct NotificationBannerView: View {
             .frame(width: isExpanded ? 780 : 100, height: 100)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.top, 25) // Breathing room for shadow at the top
         .padding(.top, 25) // Breathing room for shadow at the top
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {

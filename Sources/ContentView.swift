@@ -32,6 +32,7 @@ struct ContentView: View {
     @State private var hoverLockout = false // Prevent unintended hover during transitions
     
     @State private var savedPresets: [TimerPreset] = [
+        TimerPreset(minutes: 1, title: "1m 测试"),
         TimerPreset(minutes: 5, title: "休息一下"),
         TimerPreset(minutes: 25, title: "番茄专注"),
         TimerPreset(minutes: 3, title: "泡面")
