@@ -18,9 +18,10 @@ struct PresetListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(Array(presets.enumerated()), id: \.element.id) { index, preset in
+                let isHovered = hoveredPresetID == preset.id
                 
                 Button(action: { onSelect(preset) }) {
-                    HStack {
+                    HStack(spacing: 8) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 30 * 0.42, style: .continuous)
                                 .strokeBorder(.white.opacity(0.3), lineWidth: 1)
@@ -32,39 +33,47 @@ struct PresetListView: View {
                         }
                         
                         Text(preset.title)
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
                             .foregroundColor(.primary)
                             .lineLimit(1)
                         
                         Spacer()
                         
-                        // Delete Button (Visible on Hover)
-                        if hoveredPresetID == preset.id {
+                        // Delete Button (Shown in the expanded space)
+                        if isHovered {
                             Button(action: {
                                 onDelete(preset)
                             }) {
                                 Image(systemName: "xmark")
                                     .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.secondary.opacity(0.7))
-                                    .padding(6)
+                                    .foregroundColor(.white.opacity(0.5))
+                                    .frame(width: 24, height: 24)
+                                    .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
-                            .transition(.opacity)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .trailing).combined(with: .opacity),
+                                removal: .opacity
+                            ))
                         }
                     }
                     .padding(4)
+                    .frame(width: isHovered ? 190 : 160, alignment: .leading) // DYNAMIC WIDTH
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous).strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous)
+                            .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
                 .onHover { hover in
-                    if hover {
-                        hoveredPresetID = preset.id
-                    } else if hoveredPresetID == preset.id {
-                        hoveredPresetID = nil
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                        if hover {
+                            hoveredPresetID = preset.id
+                        } else if hoveredPresetID == preset.id {
+                            hoveredPresetID = nil
+                        }
                     }
                 }
                 .disabled(!isVisible)
@@ -79,7 +88,6 @@ struct PresetListView: View {
                 )
             }
         }
-        .frame(width: 160)
         .contentShape(Rectangle()) 
     }
 }
