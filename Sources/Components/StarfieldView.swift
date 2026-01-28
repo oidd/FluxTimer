@@ -27,16 +27,24 @@ struct StarfieldView: View {
     var body: some View {
         Canvas { context, size in
             let streamerLength: CGFloat = 0.22 
-            let midP = (sweepProgress - streamerLength / 2 + 1.0).truncatingRemainder(dividingBy: 1.0)
-            let midPos = getPerimeterPosition(for: midP, in: size)
+            let capsulePath = getCapsulePath(in: CGRect(origin: .zero, size: size))
             
-            // 1. DRAW VISIBLE STREAMER (流光)
-            let capsulePath = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: size.height / 2)
+            // 1. CALCULATE POSITIONS (Head, Mid, Tail and intermediate points for smooth reveal)
+            let startP = (sweepProgress - streamerLength + 1.0).truncatingRemainder(dividingBy: 1.0)
+            let endP = sweepProgress
             
+            // Sample 5 points along the streamer for a broader reveal zone
+            var lightingPoints: [CGPoint] = []
+            for i in 0...4 {
+                let p = (startP + (streamerLength * CGFloat(i) / 4.0)).truncatingRemainder(dividingBy: 1.0)
+                lightingPoints.append(getPerimeterPosition(for: p, in: size))
+            }
+            
+            let startPos = lightingPoints.first!
+            let endPos = lightingPoints.last!
+            
+            // 2. DRAW VISIBLE STREAMER (流光)
             context.drawLayer { layer in
-                let startP = (sweepProgress - streamerLength + 1.0).truncatingRemainder(dividingBy: 1.0)
-                let endP = sweepProgress
-                
                 let streamerPath: Path
                 if startP < endP {
                     streamerPath = capsulePath.trimmedPath(from: startP, to: endP)
@@ -47,8 +55,6 @@ struct StarfieldView: View {
                 }
                 
                 let streamerGradient = Gradient(colors: [.clear, .white.opacity(0.8), .white, .white.opacity(0.8), .clear])
-                let startPos = getPerimeterPosition(for: startP, in: size)
-                let endPos = getPerimeterPosition(for: endP, in: size)
                 
                 layer.stroke(streamerPath, with: .linearGradient(
                     streamerGradient, startPoint: startPos, endPoint: endPos
@@ -60,22 +66,30 @@ struct StarfieldView: View {
                 ), style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
             }
             
-            // 2. DRAW STARS (More Subtle & Localized)
+            // 3. DRAW STARS (Reveal near any part of the streamer)
+            // Weighting mirrors the streamer's gradient: Middle is strongest, tails are weak.
+            let weighting: [CGFloat] = [0.15, 0.65, 1.0, 0.65, 0.15]
+            
             for star in stars {
-                let dx = star.x * size.width - midPos.x
-                let dy = star.y * size.height - midPos.y
-                let distToMid = sqrt(dx*dx + dy*dy)
+                let starPos = CGPoint(x: star.x * size.width, y: star.y * size.height)
                 
-                // Tightened falloff: concentrated near the streamer (85px radius)
-                let lightEffect = pow(max(0, 1.0 - (distToMid / 85)), 2.5)
+                var maxLocalEffect: CGFloat = 0
+                for i in 0...4 {
+                    let pt = lightingPoints[i]
+                    let d = sqrt(pow(starPos.x - pt.x, 2) + pow(starPos.y - pt.y, 2))
+                    
+                    // Falloff for the "energy" of this specific point
+                    let localEffect = pow(max(0, 1.0 - (d / 90)), 2.2) * weighting[i]
+                    if localEffect > maxLocalEffect { maxLocalEffect = localEffect }
+                }
                 
-                // Reveal logic: Nearly invisible (0.04), flaring up gracefully (11.0)
-                let finalOpacity = max(star.baseOpacity * 0.04, star.baseOpacity * 11.0 * lightEffect)
+                // Base opacity (0.04) and flaring reveal
+                let finalOpacity = max(star.baseOpacity * 0.04, star.baseOpacity * 11.0 * maxLocalEffect)
                 
                 if finalOpacity > 0.01 {
                     let rect = CGRect(
-                        x: star.x * size.width - star.size/2,
-                        y: star.y * size.height - star.size/2,
+                        x: starPos.x - star.size/2,
+                        y: starPos.y - star.size/2,
                         width: star.size,
                         height: star.size
                     )
@@ -95,7 +109,7 @@ struct StarfieldView: View {
     
     private func generateStars() {
         var newStars: [Star] = []
-        let count = 180 // Reduced density for clarity
+        let count = 200 
         
         for _ in 0..<count {
             let x = CGFloat.random(in: 0...1)
@@ -105,29 +119,62 @@ struct StarfieldView: View {
             let dy = abs(y - 0.5) * 2.0
             let distFromCenter = max(dx, dy) 
             
-            // Weighted opacity: Near nonexistent in center
-            let baseOpacity = pow(max(0, distFromCenter - 0.2), 1.5) * 0.8
+            let baseOpacity = pow(max(0, distFromCenter - 0.15), 1.6) * 0.8
             
             newStars.append(Star(
                 x: x,
                 y: y,
-                size: CGFloat.random(in: 0.5...1.5), // Smaller stars
+                size: CGFloat.random(in: 0.5...1.4),
                 baseOpacity: baseOpacity
             ))
         }
         self.stars = newStars
     }
     
-    // MARK: - Perimeter Path Logic
+    // MARK: - Perimeter Logic
+    
+    private func getCapsulePath(in rect: CGRect) -> Path {
+        let r = rect.height / 2
+        var path = Path()
+        // Top Left corner of the straight segment
+        path.move(to: CGPoint(x: r, y: 0))
+        path.addLine(to: CGPoint(x: rect.width - r, y: 0))
+        path.addArc(center: CGPoint(x: rect.width - r, y: r), radius: r, startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: false)
+        path.addLine(to: CGPoint(x: r, y: rect.height))
+        path.addArc(center: CGPoint(x: r, y: r), radius: r, startAngle: .degrees(90), endAngle: .degrees(270), clockwise: false)
+        path.closeSubpath()
+        return path
+    }
     
     private func getPerimeterPosition(for progress: CGFloat, in size: CGSize) -> CGPoint {
-        // Create a Capsule path to sample from
-        let rect = CGRect(origin: .zero, size: size)
-        let path = Path(roundedRect: rect, cornerRadius: size.height / 2)
+        let r = size.height / 2
+        let w = size.width
+        let h = size.height
+        let straightLen = w - h
+        let curveLen = CGFloat.pi * r
+        let totalPerimeter = 2 * straightLen + 2 * curveLen
         
-        // Use Trimmed Path to get a point at 'progress'
-        // progress 0 is start (usually top middle or left side)
-        let trimmed = path.trimmedPath(from: progress, to: min(1.0, progress + 0.001))
-        return trimmed.currentPoint ?? CGPoint(x: size.width/2, y: size.height/2)
+        var current = progress.truncatingRemainder(dividingBy: 1.0) * totalPerimeter
+        
+        // Match the segments of getCapsulePath
+        // 1. Top Straight
+        if current <= straightLen {
+            return CGPoint(x: r + current, y: 0)
+        }
+        current -= straightLen
+        // 2. Right Arc
+        if current <= curveLen {
+            let angle = -CGFloat.pi/2 + (current / curveLen) * CGFloat.pi
+            return CGPoint(x: (w-r) + cos(angle) * r, y: r + sin(angle) * r)
+        }
+        current -= curveLen
+        // 3. Bottom Straight
+        if current <= straightLen {
+            return CGPoint(x: (w-r) - current, y: h)
+        }
+        current -= straightLen
+        // 4. Left Arc
+        let angle = CGFloat.pi/2 + (current / curveLen) * CGFloat.pi
+        return CGPoint(x: r + cos(angle) * r, y: r + sin(angle) * r)
     }
 }

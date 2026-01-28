@@ -141,7 +141,6 @@ struct NotificationBannerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.top, 25) // Breathing room for shadow at the top
-        .padding(.top, 25) // Breathing room for shadow at the top
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
