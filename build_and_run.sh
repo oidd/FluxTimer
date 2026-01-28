@@ -34,9 +34,19 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<EOF
     <string>APPL</string>
     <key>LSUIElement</key>
     <false/> <!-- Show in Dock -->
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
 </dict>
 </plist>
 EOF
+
+# Copy Icon
+if [ -f "Sources/Resources/AppIcon.icns" ]; then
+    echo "Copying App Icon..."
+    cp "Sources/Resources/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/"
+else
+    echo "Warning: Sources/Resources/AppIcon.icns not found."
+fi
 
 echo "Build complete. Running..."
 open "$APP_BUNDLE"
