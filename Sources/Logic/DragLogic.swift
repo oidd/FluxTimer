@@ -74,4 +74,16 @@ class DragLogic {
         
         return finalResult
     }
+    
+    func width(for minutes: Int) -> CGFloat {
+        let mins = Double(max(0, min(99, minutes)))
+        
+        if mins <= 15 {
+            return (mins / 15.0) * zone1Limit
+        } else if mins <= 60 {
+            return zone1Limit + ((mins - 15.0) / 45.0) * (zone2Limit - zone1Limit)
+        } else {
+            return zone2Limit + (mins - 60.0) * 5.0
+        }
+    }
 }

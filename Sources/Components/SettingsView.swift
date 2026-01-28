@@ -8,6 +8,7 @@ struct SettingsView: View {
     @AppStorage("useFloatingIsland") private var useFloatingIsland = true
     @AppStorage("useSystemNotification") private var useSystemNotification = false
     @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
+    @AppStorage("enableSound") private var enableSound = true
     
     // Snooze Options
     @AppStorage("snoozeOption1") private var snoozeOption1: Int = 1
@@ -74,6 +75,13 @@ struct SettingsView: View {
                         .pickerStyle(.menu)
                         .labelsHidden()
                         .frame(width: 110)
+                    }
+                    
+                    // Row: Prompt Sound
+                    settingsRow(title: l10n.t("提示音效")) {
+                        Toggle("", isOn: $enableSound)
+                            .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                            .labelsHidden()
                     }
                     
                     // Row: Extend Time (Snooze)

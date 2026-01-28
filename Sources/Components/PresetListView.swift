@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TimerPreset: Identifiable {
+struct TimerPreset: Identifiable, Codable, Equatable {
     let id = UUID()
     let minutes: Int
     let title: String

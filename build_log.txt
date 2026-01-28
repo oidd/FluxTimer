@@ -1,0 +1,288 @@
+warning: '倒计时': found 3 file(s) which are unhandled; explicitly declare them as resources or exclude from the target
+    /Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/icons/五角星.svg
+    /Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/icons/图标.png
+    /Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Resources/AppIcon.icns
+Building for debugging...
+[0/6] Write sources
+[1/6] Write LiquidTimer-entitlement.plist
+[2/6] Write swift-version--58304C5D6DBC2206.txt
+error: emit-module command failed with exit code 1 (use -v to see invocation)
+[4/24] Compiling LiquidTimer PresetListView.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/PresetListView.swift:4:9: warning: immutable property will not be decoded because it is declared with an initial value which cannot be overwritten
+  2 | 
+  3 | struct TimerPreset: Identifiable, Codable, Equatable {
+  4 |     let id = UUID()
+    |         |- warning: immutable property will not be decoded because it is declared with an initial value which cannot be overwritten
+    |         |- note: set the initial value via the initializer or explicitly define a CodingKeys enum including a 'id' case to silence this warning
+    |         `- note: make the property mutable instead
+  5 |     let minutes: Int
+  6 |     let title: String
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/SettingsView.swift:62:30: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 60 |                         Toggle("", isOn: $launchAtLogin)
+ 61 |                             .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+ 62 |                             .onChange(of: launchAtLogin) { newValue in
+    |                              `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 63 |                                 toggleLaunchAtLogin(enabled: newValue)
+ 64 |                             }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[5/24] Compiling LiquidTimer SettingsView.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/PresetListView.swift:4:9: warning: immutable property will not be decoded because it is declared with an initial value which cannot be overwritten
+  2 | 
+  3 | struct TimerPreset: Identifiable, Codable, Equatable {
+  4 |     let id = UUID()
+    |         |- warning: immutable property will not be decoded because it is declared with an initial value which cannot be overwritten
+    |         |- note: set the initial value via the initializer or explicitly define a CodingKeys enum including a 'id' case to silence this warning
+    |         `- note: make the property mutable instead
+  5 |     let minutes: Int
+  6 |     let title: String
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/SettingsView.swift:62:30: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 60 |                         Toggle("", isOn: $launchAtLogin)
+ 61 |                             .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+ 62 |                             .onChange(of: launchAtLogin) { newValue in
+    |                              `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 63 |                                 toggleLaunchAtLogin(enabled: newValue)
+ 64 |                             }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[6/24] Compiling LiquidTimer LocalizationManager.swift
+[7/24] Compiling LiquidTimer NotificationWindowManager.swift
+[8/24] Compiling LiquidTimer PlusButton.swift
+[9/24] Compiling LiquidTimer MarqueeText.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/MarqueeText.swift:39:22: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 37 |                         }
+ 38 |                     }
+ 39 |                     .onChange(of: isHovering) { hovering in
+    |                      `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 40 |                         animate = false
+ 41 |                         if hovering {
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/MarqueeText.swift:48:22: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 46 |                         }
+ 47 |                     }
+ 48 |                     .onChange(of: text) { _ in
+    |                      `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 49 |                         animate = false
+ 50 |                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[10/24] Compiling LiquidTimer NotificationBannerView.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/MarqueeText.swift:39:22: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 37 |                         }
+ 38 |                     }
+ 39 |                     .onChange(of: isHovering) { hovering in
+    |                      `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 40 |                         animate = false
+ 41 |                         if hovering {
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/MarqueeText.swift:48:22: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 46 |                         }
+ 47 |                     }
+ 48 |                     .onChange(of: text) { _ in
+    |                      `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+ 49 |                         animate = false
+ 50 |                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[11/24] Compiling LiquidTimer NotificationManager.swift
+[12/24] Compiling LiquidTimer LiquidTimerApp.swift
+[13/24] Emitting module LiquidTimer
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:254:5: error: expected declaration
+ 26 | }
+ 27 | 
+ 28 | struct DragCapsuleView: View {
+    |        `- note: in declaration of 'DragCapsuleView'
+ 29 |     @Binding var minutes: Int
+ 30 |     @Binding var isDragging: Bool
+    :
+252 |         }
+253 |     }
+254 |     .onChange(of: minutes) { newValue in
+    |     `- error: expected declaration
+255 |         // Clamp input
+256 |         if newValue > 99 { minutes = 99 }
+[14/24] Compiling LiquidTimer FloatingPanel.swift
+[15/24] Compiling LiquidTimer StarfieldView.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/StarfieldView.swift:38:17: warning: initialization of immutable value 'endP' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 36 |             // 1. CALCULATE POSITIONS (Head, Mid, Tail and intermediate points for smooth reveal)
+ 37 |             let startP = (sweepProgress - streamerLength + 1.0).truncatingRemainder(dividingBy: 1.0)
+ 38 |             let endP = sweepProgress
+    |                 `- warning: initialization of immutable value 'endP' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 39 |             
+ 40 |             // Sample 5 points along the streamer for a broader reveal zone
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/TimerCircle.swift:89:29: warning: result of call to 'withAnimation' is unused [#no-usage]
+ 87 |                     DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(i) * 0.05) {
+ 88 |                         if self.isTransitioning {
+ 89 |                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+    |                             `- warning: result of call to 'withAnimation' is unused [#no-usage]
+ 90 |                                 self.revealedIndices.insert(dotIdx)
+ 91 |                             }
+[16/24] Compiling LiquidTimer TimerCircle.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/StarfieldView.swift:38:17: warning: initialization of immutable value 'endP' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 36 |             // 1. CALCULATE POSITIONS (Head, Mid, Tail and intermediate points for smooth reveal)
+ 37 |             let startP = (sweepProgress - streamerLength + 1.0).truncatingRemainder(dividingBy: 1.0)
+ 38 |             let endP = sweepProgress
+    |                 `- warning: initialization of immutable value 'endP' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 39 |             
+ 40 |             // Sample 5 points along the streamer for a broader reveal zone
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/TimerCircle.swift:89:29: warning: result of call to 'withAnimation' is unused [#no-usage]
+ 87 |                     DispatchQueue.main.asyncAfter(deadline: .now() + startDelay + Double(i) * 0.05) {
+ 88 |                         if self.isTransitioning {
+ 89 |                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+    |                             `- warning: result of call to 'withAnimation' is unused [#no-usage]
+ 90 |                                 self.revealedIndices.insert(dotIdx)
+ 91 |                             }
+[17/24] Compiling LiquidTimer DragLogic.swift
+[18/24] Compiling LiquidTimer WindowDragHandler.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/WindowDragHandler.swift:11:31: warning: value 'window' was defined but never used; consider replacing with boolean test [#no-usage]
+ 9 |             DragGesture(minimumDistance: 0)
+10 |                 .onChanged { value in
+11 |                     guard let window = NSApp.windows.first(where: { $0.level == .floating }) else { return }
+   |                               `- warning: value 'window' was defined but never used; consider replacing with boolean test [#no-usage]
+12 |                     
+13 |                     if startLocation == nil {
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:254:5: error: expected declaration
+ 26 | }
+ 27 | 
+ 28 | struct DragCapsuleView: View {
+    |        `- note: in declaration of 'DragCapsuleView'
+ 29 |     @Binding var minutes: Int
+ 30 |     @Binding var isDragging: Bool
+    :
+252 |         }
+253 |     }
+254 |     .onChange(of: minutes) { newValue in
+    |     `- error: expected declaration
+255 |         // Clamp input
+256 |         if newValue > 99 { minutes = 99 }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/ContentView.swift:265:10: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+263 |             }
+264 |         }
+265 |         .onChange(of: savedPresets) { newValue in
+    |          `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+266 |             PersistenceManager.shared.savePresets(newValue)
+267 |         }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/ContentView.swift:268:10: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+266 |             PersistenceManager.shared.savePresets(newValue)
+267 |         }
+268 |         .onChange(of: isAlwaysOnTop) { _ in
+    |          `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+269 |             updateWindowLevel()
+270 |         }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/ContentView.swift:381:13: warning: result of call to 'withAnimation' is unused [#no-usage]
+379 |         if let index = savedPresets.firstIndex(where: { $0.minutes == minutes && $0.title == effectiveTitle }) {
+380 |             // Un-favorite: Remove matching preset
+381 |             withAnimation {
+    |             `- warning: result of call to 'withAnimation' is unused [#no-usage]
+382 |                 savedPresets.remove(at: index)
+383 |             }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[19/24] Compiling LiquidTimer ContentView.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/WindowDragHandler.swift:11:31: warning: value 'window' was defined but never used; consider replacing with boolean test [#no-usage]
+ 9 |             DragGesture(minimumDistance: 0)
+10 |                 .onChanged { value in
+11 |                     guard let window = NSApp.windows.first(where: { $0.level == .floating }) else { return }
+   |                               `- warning: value 'window' was defined but never used; consider replacing with boolean test [#no-usage]
+12 |                     
+13 |                     if startLocation == nil {
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:254:5: error: expected declaration
+ 26 | }
+ 27 | 
+ 28 | struct DragCapsuleView: View {
+    |        `- note: in declaration of 'DragCapsuleView'
+ 29 |     @Binding var minutes: Int
+ 30 |     @Binding var isDragging: Bool
+    :
+252 |         }
+253 |     }
+254 |     .onChange(of: minutes) { newValue in
+    |     `- error: expected declaration
+255 |         // Clamp input
+256 |         if newValue > 99 { minutes = 99 }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/ContentView.swift:265:10: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+263 |             }
+264 |         }
+265 |         .onChange(of: savedPresets) { newValue in
+    |          `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+266 |             PersistenceManager.shared.savePresets(newValue)
+267 |         }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/ContentView.swift:268:10: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+266 |             PersistenceManager.shared.savePresets(newValue)
+267 |         }
+268 |         .onChange(of: isAlwaysOnTop) { _ in
+    |          `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+269 |             updateWindowLevel()
+270 |         }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/ContentView.swift:381:13: warning: result of call to 'withAnimation' is unused [#no-usage]
+379 |         if let index = savedPresets.firstIndex(where: { $0.minutes == minutes && $0.title == effectiveTitle }) {
+380 |             // Un-favorite: Remove matching preset
+381 |             withAnimation {
+    |             `- warning: result of call to 'withAnimation' is unused [#no-usage]
+382 |                 savedPresets.remove(at: index)
+383 |             }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[20/24] Compiling LiquidTimer ClickDraggableButton.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:254:5: error: expected declaration
+ 26 | }
+ 27 | 
+ 28 | struct DragCapsuleView: View {
+    |        `- note: in declaration of 'DragCapsuleView'
+ 29 |     @Binding var minutes: Int
+ 30 |     @Binding var isDragging: Bool
+    :
+252 |         }
+253 |     }
+254 |     .onChange(of: minutes) { newValue in
+    |     `- error: expected declaration
+255 |         // Clamp input
+256 |         if newValue > 99 { minutes = 99 }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:136:26: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+134 |                             isEditing = false
+135 |                         }
+136 |                         .onChange(of: isFocused) { focused in
+    |                          `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+137 |                             if !focused { isEditing = false }
+138 |                         }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[21/24] Compiling LiquidTimer DragCapsuleView.swift
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:254:5: error: expected declaration
+ 26 | }
+ 27 | 
+ 28 | struct DragCapsuleView: View {
+    |        `- note: in declaration of 'DragCapsuleView'
+ 29 |     @Binding var minutes: Int
+ 30 |     @Binding var isDragging: Bool
+    :
+252 |         }
+253 |     }
+254 |     .onChange(of: minutes) { newValue in
+    |     `- error: expected declaration
+255 |         // Clamp input
+256 |         if newValue > 99 { minutes = 99 }
+
+/Users/ivean/Documents/软件安装/我的扩展/倒计时/Sources/Components/DragCapsuleView.swift:136:26: warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+134 |                             isEditing = false
+135 |                         }
+136 |                         .onChange(of: isFocused) { focused in
+    |                          `- warning: 'onChange(of:perform:)' was deprecated in macOS 14.0: Use `onChange` with a two or zero parameter action closure instead. [#DeprecatedDeclaration]
+137 |                             if !focused { isEditing = false }
+138 |                         }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[22/25] Compiling LiquidTimer PersistenceManager.swift

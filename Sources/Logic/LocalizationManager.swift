@@ -142,6 +142,10 @@ class LocalizationManager {
         "用于悬浮岛上快捷延长计时时间": [
             "zh": "用于悬浮岛上快捷延长计时时间",
             "en": "Used for quick extension on Floating Island"
+        ],
+        "提示音效": [
+            "zh": "提示音效",
+            "en": "Prompt Sound"
         ]
     ]
     

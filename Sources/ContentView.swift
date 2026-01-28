@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 // MULTI-TIMER MODEL
 // MULTI-TIMER MODEL
@@ -42,6 +43,7 @@ struct ContentView: View {
     @AppStorage("isAlwaysOnTop") private var isAlwaysOnTop = true
     @AppStorage("useFloatingIsland") private var useFloatingIsland = true
     @AppStorage("useSystemNotification") private var useSystemNotification = false
+    @AppStorage("enableSound") private var enableSound = true
     @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
     @State private var showSettings = false
     
@@ -252,6 +254,16 @@ struct ContentView: View {
         .onAppear {
             updateWindowLevel()
             NotificationManager.shared.requestAuthorization()
+            
+            // Load Presets
+            if let loaded = PersistenceManager.shared.loadPresets() {
+                withAnimation {
+                    savedPresets = loaded
+                }
+            }
+        }
+        .onChange(of: savedPresets) { newValue in
+            PersistenceManager.shared.savePresets(newValue)
         }
         .onChange(of: isAlwaysOnTop) { _ in
             updateWindowLevel()
@@ -268,6 +280,11 @@ struct ContentView: View {
                          runningTimers[i].hasNotified = true
                          let timerId = runningTimers[i].id
                          let title = runningTimers[i].title
+                         
+                         // Play Sound if enabled
+                         if enableSound {
+                             NSSound(named: "Glass")?.play()
+                         }
                          
                          // Route to System Notification
                          if useSystemNotification {

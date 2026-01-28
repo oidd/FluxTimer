@@ -63,6 +63,10 @@ struct DragCapsuleView: View {
     @State private var iconRotation: Double = 0
     @State private var restingWidth: CGFloat = 0
     private let visualLimit: CGFloat = 120
+    private let dragLogic = DragLogic() // Helper for reverse calc
+    
+    @State private var isEditing = false
+    @FocusState private var isFocused: Bool // For input focus
     
     private let l10n = LocalizationManager.shared
     
@@ -118,10 +122,30 @@ struct DragCapsuleView: View {
                 }
                 .frame(width: 20, height: 20)
                 
-                Text(String(format: l10n.t("%d min"), minutes))
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
-                    .monospacedDigit()
-                    .offset(y: -0.5)
+                if isEditing {
+                    TextField("0", value: $minutes, formatter: NumberFormatter())
+                        .focused($isFocused)
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .monospacedDigit()
+                        .multilineTextAlignment(.leading)
+                        .textFieldStyle(.plain)
+                        .frame(width: 40)
+                        .onSubmit {
+                            isEditing = false
+                        }
+                        .onChange(of: isFocused) { focused in
+                            if !focused { isEditing = false }
+                        }
+                } else {
+                    Text(String(format: l10n.t("%d min"), minutes))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
+                        .monospacedDigit()
+                        .offset(y: -0.5)
+                        .onTapGesture {
+                            isEditing = true
+                            isFocused = true
+                        }
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
@@ -224,6 +248,24 @@ struct DragCapsuleView: View {
                         .offset(y: -24)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+            }
+        }
+        .onChange(of: minutes) { newValue in
+            // Clamp input
+            if newValue > 99 { minutes = 99 }
+            if newValue < 0 { minutes = 0 }
+            
+            // Sync width if not dragging
+            if !isDragging {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    dragOffset = dragLogic.width(for: minutes)
+                }
+            }
+        }
+        .onAppear {
+            // Initial sync
+            if minutes > 0 {
+                dragOffset = dragLogic.width(for: minutes)
             }
         }
     }
