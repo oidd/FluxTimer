@@ -75,6 +75,17 @@ struct ContentView: View {
             }
             .padding(.trailing, 62) // Maintain 12px gap from button during running
             .frame(width: 525, height: 80, alignment: .trailing) 
+            .mask(
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0),
+                        .init(color: .black, location: 0.15),
+                        .init(color: .black, location: 1.0)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            ) 
             .offset(x: 0, y: 35) 
             .zIndex(10)
             

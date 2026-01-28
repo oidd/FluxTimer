@@ -69,8 +69,7 @@ struct NotificationBannerView: View {
             }
             .frame(width: isExpanded ? 780 : 100, height: 100)
             .clipShape(RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous))
-            .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 10)
-            .drawingGroup() 
+            .shadow(color: .black.opacity(0.15), radius: 16, x: 0, y: 10) 
             
             // 2. Content Layer (Front)
             HStack(spacing: 0) {
