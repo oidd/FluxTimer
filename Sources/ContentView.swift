@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var timerTitle: String = ""
     @State private var isDragging = false
     @State private var showPresets = false // Sequenced waterfall state
+    @State private var shimmerProgress: CGFloat = -1.0 // Shimmer sweep (-1 to 1)
     
     // MULTI-TIMER STATE
     @State private var runningTimers: [RunningTimer] = []
@@ -117,6 +118,42 @@ struct ContentView: View {
                     }
                 }
                 .frame(width: 50, height: 50)
+                .overlay(
+                    // SHIMMER LIGHT SWEEP
+                    GeometryReader { geo in
+                        let w = geo.size.width
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .white.opacity(0.4), location: 0.5),
+                                .init(color: .clear, location: 1)
+                            ],
+                            startPoint: .bottomLeading,
+                            endPoint: .topTrailing
+                        )
+                        .frame(width: w * 2, height: w * 2)
+                        .offset(x: w * shimmerProgress, y: -w * shimmerProgress)
+                    }
+                    .allowsHitTesting(false)
+                )
+                .clipShape(Circle()) // Apply clip AFTER overlay
+                .onHover { hovering in
+                    if hovering {
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                            shimmerProgress = 1.0 // Sweep to top-right
+                        }
+                    } else {
+                        // BACK SWEEP: Only if we didn't click and expand
+                        if appState == .idle {
+                            withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
+                                shimmerProgress = -1.0 // Sweep back to bottom-left
+                            }
+                        } else {
+                            // Instant reset if expanded
+                            shimmerProgress = -1.0
+                        }
+                    }
+                }
             }
             .offset(x: 375, y: 50)
             .zIndex(100) // Always on Top
