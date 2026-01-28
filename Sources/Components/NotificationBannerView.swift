@@ -16,6 +16,7 @@ struct NotificationBannerView: View {
     // Auto-dismiss state
     @State private var timeRemaining: CGFloat = 30 
     @State private var totalTime: CGFloat = 30
+    @State private var rotation: Double = 0 // For the masked rotating glow
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     
     // Action to start the reverse morphing
@@ -46,17 +47,49 @@ struct NotificationBannerView: View {
     
     var body: some View {
         ZStack {
-            // 1. Background Capsule
-            Capsule()
-                .fill(.ultraThinMaterial)
-                .frame(width: isExpanded ? 780 : 100, height: 100)
-                .overlay(
-                    Capsule()
-                        .strokeBorder(.white.opacity(0.15), lineWidth: 1)
-                )
-                .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 10)
+            // 1. Background Layer with Masked Rotating Glow
+            ZStack {
+                // Main Material
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                
+                // MASKED ROTATING GLOW (Strictly follows the border)
+                if isExpanded && contentOpacity > 0.5 {
+                    AngularGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: .clear, location: 0.0),
+                            .init(color: .white.opacity(0.8), location: 0.1), // Beam 1
+                            .init(color: .clear, location: 0.2),
+                            .init(color: .clear, location: 0.5),
+                            .init(color: .white.opacity(0.8), location: 0.6), // Beam 2
+                            .init(color: .clear, location: 0.7),
+                            .init(color: .clear, location: 1.0)
+                        ]),
+                        center: .center
+                    )
+                    .rotationEffect(.degrees(rotation))
+                    .mask(
+                        Capsule()
+                            .stroke(lineWidth: 3) // Light only exists on this 3px border
+                    )
+                    .blur(radius: 1.5)
+                    .onAppear {
+                        withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
+                            rotation = 360
+                        }
+                    }
+                }
+                
+                // Static Subtle Border
+                Capsule()
+                    .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+            }
+            .frame(width: isExpanded ? 780 : 100, height: 100)
+            .clipShape(Capsule())
+            .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 10)
+            .drawingGroup() 
             
-            // 2. Content Layer (Strictly laid out to prevent overlap)
+            // 2. Content Layer
             HStack(spacing: 0) {
                 if isExpanded {
                     // LEFT: Close
