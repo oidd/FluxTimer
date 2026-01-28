@@ -8,6 +8,12 @@ struct SettingsView: View {
     @AppStorage("useFloatingIsland") private var useFloatingIsland = true
     @AppStorage("useSystemNotification") private var useSystemNotification = false
     @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
+    
+    // Snooze Options
+    @AppStorage("snoozeOption1") private var snoozeOption1: Int = 1
+    @AppStorage("snoozeOption2") private var snoozeOption2: Int = 5
+    @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
+    
     private let l10n = LocalizationManager.shared
     @State private var dragOffset: CGSize = .zero
     
@@ -70,6 +76,37 @@ struct SettingsView: View {
                         .frame(width: 110)
                     }
                     
+                    // Row: Extend Time (Snooze)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(l10n.t("延长计时"))
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.primary.opacity(0.9))
+                            
+                            Text(l10n.t("用于悬浮岛上快捷延长计时时间"))
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary.opacity(0.8))
+                        }
+                        
+                        Spacer()
+                        
+                        HStack(spacing: 8) {
+                            snoozeInput(value: $snoozeOption1)
+                            snoozeInput(value: $snoozeOption2)
+                            snoozeInput(value: $snoozeOption3)
+                            Text("min")
+                                .font(.system(size: 13))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.04))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .frame(maxWidth: .infinity)
+                    .opacity(useFloatingIsland ? 1.0 : 0.5)
+                    .disabled(!useFloatingIsland)
+                    
                     // Row: Notification Method (Consolidated)
                     VStack(alignment: .leading, spacing: 10) {
                         Text(l10n.t("通知方式"))
@@ -77,13 +114,23 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 4)
                         
-                        VStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 12) {
                             HStack(spacing: 24) {
                                 Toggle(l10n.t("悬浮岛 (灵动岛样式)"), isOn: $useFloatingIsland)
                                     .toggleStyle(CheckboxToggleStyle())
+                                    .disabled(useFloatingIsland && !useSystemNotification) // Only disable if it's the LAST one ON
                                 
                                 Toggle(l10n.t("系统通知 (通知中心)"), isOn: $useSystemNotification)
                                     .toggleStyle(CheckboxToggleStyle())
+                                    .disabled(useSystemNotification && !useFloatingIsland) // Only disable if it's the LAST one ON
+                                    
+                                Spacer()
+                            }
+                            .onAppear {
+                                // Auto-recovery: If both are somehow off (legacy state), force one on
+                                if !useFloatingIsland && !useSystemNotification {
+                                    useFloatingIsland = true
+                                }
                             }
                             
                             HStack {
@@ -97,14 +144,6 @@ struct SettingsView: View {
                                         .foregroundColor(.blue.opacity(0.8))
                                 }
                                 .buttonStyle(.plain)
-                                
-                                Spacer()
-                                
-                                if !useFloatingIsland && !useSystemNotification {
-                                    Text(l10n.t("请至少保留一种通知方式"))
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.red.opacity(0.7))
-                                }
                             }
                         }
                         .padding(.horizontal, 16)
@@ -118,7 +157,7 @@ struct SettingsView: View {
                 .padding(.bottom, 20)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(width: 440, height: 300) // Slightly wider and shorter to fit all
+            .frame(width: 440, height: 380) // Increased height for new option
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
@@ -175,5 +214,12 @@ struct SettingsView: View {
             print("Failed to toggle launch at login: \(error.localizedDescription)")
             // Fallback: If it's already registered or unregistered, it might throw
         }
+    }
+    
+    private func snoozeInput(value: Binding<Int>) -> some View {
+        TextField("", value: value, formatter: NumberFormatter())
+            .multilineTextAlignment(.center)
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 40)
     }
 }

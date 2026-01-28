@@ -17,6 +17,12 @@ struct NotificationBannerView: View {
     @State private var timeRemaining: CGFloat = 30 
     @State private var totalTime: CGFloat = 30
     @State private var rotation: Double = 0 // For the masked rotating glow
+    
+    // Snooze Options
+    @AppStorage("snoozeOption1") private var snoozeOption1: Int = 1
+    @AppStorage("snoozeOption2") private var snoozeOption2: Int = 5
+    @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
+    
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     
     // Action to start the reverse morphing
@@ -115,22 +121,22 @@ struct NotificationBannerView: View {
                 
                 // RIGHT: Three Dots / Snooze Buttons
                 HStack(spacing: isExpanded ? 16 : 8) {
-                    MorphedSnoozeButton(label: "+1 min", isActive: dotStates[0], isExpanded: isExpanded) {
+                    MorphedSnoozeButton(label: "+\(snoozeOption1) min", isActive: dotStates[0], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
-                            onSnooze(1)
+                            onSnooze(snoozeOption1)
                         }
                     }
-                    MorphedSnoozeButton(label: "+5 min", isActive: dotStates[1], isExpanded: isExpanded) {
+                    MorphedSnoozeButton(label: "+\(snoozeOption2) min", isActive: dotStates[1], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
-                            onSnooze(5)
+                            onSnooze(snoozeOption2)
                         }
                     }
-                    MorphedSnoozeButton(label: "+30 min", isActive: dotStates[2], isExpanded: isExpanded) {
+                    MorphedSnoozeButton(label: "+\(snoozeOption3) min", isActive: dotStates[2], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
-                            onSnooze(30)
+                            onSnooze(snoozeOption3)
                         }
                     }
                 }

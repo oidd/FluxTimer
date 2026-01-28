@@ -130,6 +130,18 @@ class LocalizationManager {
         "当前语言": [
             "zh": "当前语言",
             "en": "Current Language"
+        ],
+        "延长计时": [
+            "zh": "延长计时",
+            "en": "Extend Time"
+        ],
+        "悬浮岛快速延时选项": [
+            "zh": "悬浮岛快速延时选项",
+            "en": "Quick snooze options"
+        ],
+        "用于悬浮岛上快捷延长计时时间": [
+            "zh": "用于悬浮岛上快捷延长计时时间",
+            "en": "Used for quick extension on Floating Island"
         ]
     ]
     
