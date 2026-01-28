@@ -38,6 +38,12 @@ struct ContentView: View {
         TimerPreset(minutes: 3, title: "泡面")
     ]
     
+    // PERSISTENT SETTINGS
+    @AppStorage("isAlwaysOnTop") private var isAlwaysOnTop = true
+    @AppStorage("useFloatingIsland") private var useFloatingIsland = true
+    @AppStorage("useSystemNotification") private var useSystemNotification = false
+    @State private var showSettings = false
+    
     // Timer
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
@@ -138,6 +144,19 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous)) // Apply clip AFTER overlay
+                .contextMenu {
+                    Toggle("始终置顶", isOn: $isAlwaysOnTop)
+                    
+                    Button("设置") {
+                        showSettings = true
+                    }
+                    
+                    Divider()
+                    
+                    Button("退出") {
+                        NSApp.terminate(nil)
+                    }
+                }
                 .onHover { hovering in
                     if hovering {
                         withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
@@ -207,8 +226,21 @@ struct ContentView: View {
             }
             .offset(x: 537, y: 50)
             .zIndex(50) // Behind button, in front of background
+            
+            // 4. SETTINGS OVERLAY
+            if showSettings {
+                SettingsView(isPresented: $showSettings)
+                    .zIndex(200)
+            }
         }
         .frame(width: 1000, height: 600, alignment: .topLeading)
+        .onAppear {
+            updateWindowLevel()
+            NotificationManager.shared.requestAuthorization()
+        }
+        .onChange(of: isAlwaysOnTop) { _ in
+            updateWindowLevel()
+        }
         .onReceive(timer) { _ in
              for i in runningTimers.indices {
                  if runningTimers[i].remainingTime > 0 {
@@ -222,17 +254,26 @@ struct ContentView: View {
                          let timerId = runningTimers[i].id
                          let title = runningTimers[i].title
                          
-                         print("DEBUG: Showing notification for \(title)") // Debug
+                         // Route to System Notification
+                         if useSystemNotification {
+                             NotificationManager.shared.sendNotification(
+                                 title: title.isEmpty ? "倒计时结束" : title,
+                                 subtitle: "时间到！"
+                             )
+                         }
                          
-                         NotificationWindowManager.shared.show(
-                             title: title,
-                             onSnooze: { min in
-                                 self.snoozeTimer(id: timerId, minutes: min)
-                             },
-                             onDismiss: {
-                                 self.dismissTimer(id: timerId)
-                             }
-                         )
+                         // Route to Floating Island (custom banner)
+                         if useFloatingIsland {
+                             NotificationWindowManager.shared.show(
+                                 title: title,
+                                 onSnooze: { min in
+                                     self.snoozeTimer(id: timerId, minutes: min)
+                                 },
+                                 onDismiss: {
+                                     self.dismissTimer(id: timerId)
+                                 }
+                             )
+                         }
                      }
                  }
              }
@@ -320,6 +361,12 @@ struct ContentView: View {
     func deletePreset(_ preset: TimerPreset) {
         withAnimation {
             savedPresets.removeAll { $0.id == preset.id }
+        }
+    }
+
+    private func updateWindowLevel() {
+        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" || $0.level == .floating || $0.level == .normal }) {
+            window.level = isAlwaysOnTop ? .floating : .normal
         }
     }
 }
