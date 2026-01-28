@@ -200,7 +200,9 @@ struct MorphedSnoozeButton: View {
                     Text(label)
                         .font(.system(size: 18, weight: .medium, design: .rounded))
                         .foregroundColor(isHovering ? .white : .white.opacity(0.8))
-                        .padding(.horizontal, 16)
+                        .lineLimit(1)
+                        .fixedSize()
+                        .padding(.horizontal, 20)
                         .padding(.vertical, 10)
                         .transition(.scale(scale: 0.5).combined(with: .opacity))
                 }
