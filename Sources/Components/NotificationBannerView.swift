@@ -96,12 +96,13 @@ struct NotificationBannerView: View {
                     .opacity(contentOpacity)
                     
                     // MIDDLE: Info
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("时间到")
-                            .font(.system(size: 16, weight: .medium))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(LocalizationManager.shared.t("时间到"))
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundColor(.white.opacity(0.6))
-                        Text(title.isEmpty ? "倒计时结束" : title)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                        
+                        Text(title.isEmpty ? LocalizationManager.shared.t("倒计时结束") : title)
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
                             .lineLimit(1)
                     }
@@ -115,19 +116,19 @@ struct NotificationBannerView: View {
                 
                 // RIGHT: Three Dots / Snooze Buttons
                 HStack(spacing: isExpanded ? 16 : 8) {
-                    MorphedSnoozeButton(label: "+1m", isActive: dotStates[0], isExpanded: isExpanded) {
+                    MorphedSnoozeButton(label: "+1 min", isActive: dotStates[0], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
                             onSnooze(1)
                         }
                     }
-                    MorphedSnoozeButton(label: "+5m", isActive: dotStates[1], isExpanded: isExpanded) {
+                    MorphedSnoozeButton(label: "+5 min", isActive: dotStates[1], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
                             onSnooze(5)
                         }
                     }
-                    MorphedSnoozeButton(label: "+30m", isActive: dotStates[2], isExpanded: isExpanded) {
+                    MorphedSnoozeButton(label: "+30 min", isActive: dotStates[2], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
                             onSnooze(30)

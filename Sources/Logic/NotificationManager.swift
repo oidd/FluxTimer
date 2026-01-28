@@ -22,9 +22,10 @@ class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     
     func sendNotification(title: String, subtitle: String = "") {
         let content = UNMutableNotificationContent()
-        content.title = title.isEmpty ? "倒计时结束" : title
+        content.title = title.isEmpty ? LocalizationManager.shared.t("倒计时结束") : title
         content.subtitle = subtitle
-        content.sound = .default
+        // content.body = ... (if used)
+        content.sound = UNNotificationSound.default
         
         let request = UNNotificationRequest(
             identifier: UUID().uuidString,

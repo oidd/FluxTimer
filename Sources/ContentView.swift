@@ -32,17 +32,20 @@ struct ContentView: View {
     @State private var hoverLockout = false // Prevent unintended hover during transitions
     
     @State private var savedPresets: [TimerPreset] = [
-        TimerPreset(minutes: 1, title: "1m 测试"),
-        TimerPreset(minutes: 5, title: "休息一下"),
-        TimerPreset(minutes: 25, title: "番茄专注"),
-        TimerPreset(minutes: 3, title: "泡面")
+        TimerPreset(minutes: 1, title: LocalizationManager.shared.t("1m 测试")),
+        TimerPreset(minutes: 5, title: LocalizationManager.shared.t("休息一下")),
+        TimerPreset(minutes: 25, title: LocalizationManager.shared.t("番茄专注")),
+        TimerPreset(minutes: 3, title: LocalizationManager.shared.t("泡面"))
     ]
     
     // PERSISTENT SETTINGS
     @AppStorage("isAlwaysOnTop") private var isAlwaysOnTop = true
     @AppStorage("useFloatingIsland") private var useFloatingIsland = true
     @AppStorage("useSystemNotification") private var useSystemNotification = false
+    @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
     @State private var showSettings = false
+    
+    private let l10n = LocalizationManager.shared
     
     // Timer
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -145,15 +148,15 @@ struct ContentView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous)) // Apply clip AFTER overlay
                 .contextMenu {
-                    Toggle("始终置顶", isOn: $isAlwaysOnTop)
+                    Toggle(l10n.t("始终置顶"), isOn: $isAlwaysOnTop)
                     
-                    Button("设置") {
+                    Button(l10n.t("设置")) {
                         showSettings = true
                     }
                     
                     Divider()
                     
-                    Button("退出") {
+                    Button(l10n.t("退出")) {
                         NSApp.terminate(nil)
                     }
                 }
@@ -187,7 +190,7 @@ struct ContentView: View {
                             minutes: $minutes,
                             isDragging: $isDragging,
                             title: $timerTitle,
-                            isFavorite: savedPresets.contains { $0.minutes == minutes && $0.title == (timerTitle.isEmpty ? "自定义" : timerTitle) },
+                            isFavorite: savedPresets.contains { $0.minutes == minutes && $0.title == (timerTitle.isEmpty ? l10n.t("自定义") : timerTitle) },
                             dragChanged: { translation in
                                 self.minutes = dragLogic.minutes(for: translation)
                             },
@@ -257,8 +260,8 @@ struct ContentView: View {
                          // Route to System Notification
                          if useSystemNotification {
                              NotificationManager.shared.sendNotification(
-                                 title: title.isEmpty ? "倒计时结束" : title,
-                                 subtitle: "时间到！"
+                                 title: title.isEmpty ? l10n.t("倒计时结束") : title,
+                                 subtitle: l10n.t("时间到！")
                              )
                          }
                          
@@ -342,7 +345,7 @@ struct ContentView: View {
     
     func togglePreset() {
         guard minutes > 0 else { return }
-        let effectiveTitle = timerTitle.isEmpty ? "自定义" : timerTitle
+        let effectiveTitle = timerTitle.isEmpty ? l10n.t("自定义") : timerTitle
         
         if let index = savedPresets.firstIndex(where: { $0.minutes == minutes && $0.title == effectiveTitle }) {
             // Un-favorite: Remove matching preset
@@ -380,6 +383,8 @@ struct RunningTimerView: View {
     
     @State private var isHovering = false
     @State private var isClosing = false // Two-stage closing flag
+    
+    private let l10n = LocalizationManager.shared
     
     // Helper to format time "MM:ss"
     private var formattedTime: String {
@@ -435,7 +440,7 @@ struct RunningTimerView: View {
                             .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
                         
                         MarqueeText(
-                            text: timer.title.isEmpty ? "倒计时" : timer.title,
+                            text: timer.title.isEmpty ? l10n.t("倒计时") : timer.title,
                             font: .system(size: 13, weight: .medium),
                             leftFade: 5,
                             rightFade: 5,

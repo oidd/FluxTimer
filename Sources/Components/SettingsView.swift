@@ -7,7 +7,8 @@ struct SettingsView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("useFloatingIsland") private var useFloatingIsland = true
     @AppStorage("useSystemNotification") private var useSystemNotification = false
-    
+    @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
+    private let l10n = LocalizationManager.shared
     @State private var dragOffset: CGSize = .zero
     
     var body: some View {
@@ -25,8 +26,8 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 // Header
                 HStack {
-                    Text("设置")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    Text(l10n.t("设置"))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.primary)
                     
                     Spacer()
@@ -38,72 +39,93 @@ struct SettingsView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(.secondary.opacity(0.5))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundColor(.white.opacity(0.3))
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 10)
+                .padding(.vertical, 16)
                 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        
-                        // Section: General
-                        settingsSection(title: "通用") {
-                            Toggle("开机自启动", isOn: $launchAtLogin)
-                                .onChange(of: launchAtLogin) {
-                                    toggleLaunchAtLogin(enabled: launchAtLogin)
-                                }
+                VStack(spacing: 8) {
+                    // Row: General
+                    settingsRow(title: l10n.t("开机自启动")) {
+                        Toggle("", isOn: $launchAtLogin)
+                            .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                            .onChange(of: launchAtLogin) { newValue in
+                                toggleLaunchAtLogin(enabled: newValue)
+                            }
+                            .labelsHidden()
+                    }
+                    
+                    // Row: Language
+                    settingsRow(title: l10n.t("语言")) {
+                        Picker("", selection: $appLanguage) {
+                            ForEach(AppLanguage.allCases, id: \.self) { lang in
+                                Text(lang.pickerName).tag(lang)
+                            }
                         }
+                        .pickerStyle(.menu)
+                        .labelsHidden()
+                        .frame(width: 110)
+                    }
+                    
+                    // Row: Notification Method (Consolidated)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(l10n.t("通知方式"))
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 4)
                         
-                        // Section: Notifications
-                        settingsSection(title: "通知方式") {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Toggle("悬浮岛 (灵动岛样式)", isOn: $useFloatingIsland)
-                                    .disabled(!useSystemNotification && useFloatingIsland) // Must keep one
+                        VStack(spacing: 12) {
+                            HStack(spacing: 24) {
+                                Toggle(l10n.t("悬浮岛 (灵动岛样式)"), isOn: $useFloatingIsland)
+                                    .toggleStyle(CheckboxToggleStyle())
                                 
-                                Toggle("系统通知 (通知中心)", isOn: $useSystemNotification)
-                                    .disabled(!useFloatingIsland && useSystemNotification) // Must keep one
-                                    .onChange(of: useSystemNotification) {
-                                        if useSystemNotification {
-                                            NotificationManager.shared.requestAuthorization()
-                                        }
+                                Toggle(l10n.t("系统通知 (通知中心)"), isOn: $useSystemNotification)
+                                    .toggleStyle(CheckboxToggleStyle())
+                            }
+                            
+                            HStack {
+                                Button(action: {
+                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+                                        NSWorkspace.shared.open(url)
                                     }
+                                }) {
+                                    Text(l10n.t("打开系统通知设置..."))
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.blue.opacity(0.8))
+                                }
+                                .buttonStyle(.plain)
                                 
-                                if useSystemNotification {
-                                    Button(action: {
-                                        NotificationManager.shared.openNotificationSettings()
-                                    }) {
-                                        Text("打开系统通知设置...")
-                                            .font(.system(size: 12))
-                                            .foregroundColor(.blue)
-                                    }
-                                    .buttonStyle(.plain)
+                                Spacer()
+                                
+                                if !useFloatingIsland && !useSystemNotification {
+                                    Text(l10n.t("请至少保留一种通知方式"))
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.red.opacity(0.7))
                                 }
                             }
                         }
-                        
-                        if !useFloatingIsland && !useSystemNotification {
-                            Text("请至少保留一种通知方式")
-                                .font(.system(size: 11))
-                                .foregroundColor(.red.opacity(0.8))
-                                .padding(.top, -10)
-                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .background(Color.white.opacity(0.04))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
-                    .padding(20)
+                    .padding(.top, 4)
                 }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(width: 320, height: 380)
+            .frame(width: 440, height: 300) // Slightly wider and shorter to fit all
             .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 320 * 0.42 / (320/50), style: .continuous)) // Proportional curvature
-            // Actually, let's just use a fixed clean radius that feels right for the panel size
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(.white.opacity(0.2), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(.white.opacity(0.15), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+            .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 15)
             .offset(dragOffset)
             .gesture(
                 DragGesture()
@@ -111,28 +133,33 @@ struct SettingsView: View {
                         dragOffset = value.translation
                     }
                     .onEnded { _ in
-                        withAnimation(.spring()) {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
                             dragOffset = .zero
                         }
                     }
             )
         }
-        .transition(.scale(scale: 0.9).combined(with: .opacity))
+        .transition(.asymmetric(
+            insertion: .scale(scale: 0.92).combined(with: .opacity),
+            removal: .scale(scale: 0.95).combined(with: .opacity)
+        ))
     }
     
-    private func settingsSection<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    private func settingsRow<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        HStack {
             Text(title)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.secondary)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.primary.opacity(0.9))
             
-            VStack {
-                content()
-            }
-            .padding(12)
-            .background(Color.white.opacity(0.05))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            Spacer()
+            
+            content()
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.04))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .frame(maxWidth: .infinity)
     }
     
     private func toggleLaunchAtLogin(enabled: Bool) {
