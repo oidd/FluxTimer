@@ -32,12 +32,19 @@ struct PresetListView: View {
                                 .font(.system(size: 12, weight: .bold))
                         }
                         
-                        Text(preset.title)
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
+                        MarqueeText(
+                            text: preset.title,
+                            font: .system(size: 14, weight: .medium, design: .rounded),
+                            leftFade: 5,
+                            rightFade: 5,
+                            startDelay: 0.2,
+                            alignment: .leading,
+                            isHovering: isHovered
+                        )
+                        .foregroundColor(.primary)
+                        .frame(height: 16)
                         
-                        Spacer()
+                        Spacer(minLength: 12) // Restore right margin
                         
                         // Delete Button (Shown in the expanded space)
                         if isHovered {

@@ -130,6 +130,7 @@ struct ContentView: View {
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                         appState = .idle
+                                        timerTitle = "" // Clear text on collapse
                                     }
                                 }
                             }
@@ -456,7 +457,8 @@ struct RunningTimerView: View {
                             leftFade: 5,
                             rightFade: 5,
                             startDelay: 0.5,
-                            alignment: .leading
+                            alignment: .leading,
+                            isHovering: effectiveHover
                         )
                         .frame(width: 80, height: 16)
                         .opacity(0.8)

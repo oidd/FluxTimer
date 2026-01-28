@@ -7,22 +7,25 @@ struct MarqueeText: View {
     var rightFade: CGFloat = 16
     var startDelay: Double = 1.5
     var alignment: Alignment = .leading
+    var isHovering: Bool = true // Control scrolling externally
     
     @State private var animate = false
     
     var body: some View {
         GeometryReader { geometry in
-            let textWidth = text.width(usingFont: font)
+            let textWidth = text.width(usingFont: font) + 20 // Add buffer for safety
             let isTooLong = textWidth > geometry.size.width
+            let shouldScroll = isTooLong && isHovering
+            let duration = Double(textWidth) / 40.0 // Faster speed as requested
             
             ZStack(alignment: alignment) {
                 Text(text)
                     .font(font)
                     .fixedSize() // Prevent wrapping
-                    .offset(x: animate && isTooLong ? -(textWidth - geometry.size.width) : 0)
+                    .offset(x: animate && shouldScroll ? -(textWidth - geometry.size.width) : 0)
                     .animation(
-                        isTooLong
-                        ? .linear(duration: Double(textWidth) / 30).delay(startDelay).repeatForever(autoreverses: true)
+                        shouldScroll
+                        ? .easeInOut(duration: duration).delay(startDelay).repeatForever(autoreverses: true)
                         : .default,
                         value: animate
                     )
@@ -31,6 +34,15 @@ struct MarqueeText: View {
                         animate = false
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                             animate = true
+                        }
+                    }
+                    .onChange(of: isHovering) { hovering in
+                        animate = false
+                        if hovering {
+                            // Wait for the expansion animation to finish before starting marquee
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                animate = true
+                            }
                         }
                     }
                     .onChange(of: text) { _ in
