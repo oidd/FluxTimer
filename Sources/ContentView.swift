@@ -25,6 +25,7 @@ struct ContentView: View {
     @State private var timerTitle: String = ""
     @State private var isDragging = false
     @State private var isHovering = false
+    @State private var isHoveringPresetsArea = false // New state for 'Peek' effect
     
     // MULTI-TIMER STATE
     @State private var runningTimers: [RunningTimer] = []
@@ -137,6 +138,7 @@ struct ContentView: View {
                     
                     PresetListView(
                         isVisible: isHovering, 
+                        isFullVisibility: isHoveringPresetsArea, // Pass tiered visibility state
                         presets: $savedPresets,
                         onSelect: { preset in
                             self.minutes = preset.minutes
@@ -149,7 +151,17 @@ struct ContentView: View {
                     )
                     .transition(.opacity.animation(.easeInOut(duration: 0.2)))
                     .onHover { hover in
-                        if hover { cancelHoverClose() } else { scheduleHoverClose() }
+                        if hover { 
+                            cancelHoverClose()
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHoveringPresetsArea = true // Show all fully
+                            }
+                        } else { 
+                            scheduleHoverClose()
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isHoveringPresetsArea = false // Show tiered 'peek'
+                            }
+                        }
                     }
                 }
             }

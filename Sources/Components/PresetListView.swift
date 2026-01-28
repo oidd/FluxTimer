@@ -8,6 +8,7 @@ struct TimerPreset: Identifiable {
 
 struct PresetListView: View {
     var isVisible: Bool // Controlled by parent
+    var isFullVisibility: Bool // New: Controlled by specific area hover
     @Binding var presets: [TimerPreset] // Now dynamic
     var onSelect: (TimerPreset) -> Void
     var onDelete: (TimerPreset) -> Void // New Callback
@@ -17,6 +18,12 @@ struct PresetListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             ForEach(Array(presets.enumerated()), id: \.element.id) { index, preset in
+                // Tiered Opacity Calculation for 'Peek' Mode
+                // 1st (idx 0): 50%
+                // 2nd (idx 1): 10% fading to 0% at bottom
+                // 3rd+ (idx 2+): 0%
+                let rowOpacity: Double = isFullVisibility ? 1.0 : (index == 0 ? 0.5 : (index == 1 ? 1.0 : 0.0))
+                
                 Button(action: { onSelect(preset) }) {
                     HStack {
                         ZStack {
@@ -36,53 +43,64 @@ struct PresetListView: View {
                         
                         Spacer()
                         
-                        // Delete Button (Visible on Hover)
-                        if hoveredPresetID == preset.id {
+                        // Delete Button (Visible on Hover in Full Mode)
+                        if isFullVisibility && hoveredPresetID == preset.id {
                             Button(action: {
                                 onDelete(preset)
                             }) {
                                 Image(systemName: "xmark")
-                                    .font(.system(size: 10, weight: .bold)) // Slightly bolder
-                                    .foregroundColor(.secondary.opacity(0.7)) // Slightly transparent grey
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.secondary.opacity(0.7))
                                     .padding(6)
-                                    // Background Removed
                             }
                             .buttonStyle(.plain)
                             .transition(.opacity)
                         }
                     }
                     .padding(4)
-                    .background(.ultraThinMaterial) // STANDARD
+                    .background(.ultraThinMaterial)
                     .clipShape(Capsule())
                     .overlay(
-                        Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 1) // STANDARD
+                        Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
-                // Hover Detection for Row
                 .onHover { hover in
-                    if hover {
-                        hoveredPresetID = preset.id
-                    } else if hoveredPresetID == preset.id {
-                        hoveredPresetID = nil
+                    if isFullVisibility { // Only track internal hover if fully visible
+                        if hover {
+                            hoveredPresetID = preset.id
+                        } else if hoveredPresetID == preset.id {
+                            hoveredPresetID = nil
+                        }
                     }
                 }
-                // Staggered Animation Logic
-                .opacity(isVisible ? 1 : 0)
+                .disabled(!isFullVisibility && index >= 2) // Disable hidden items
+                .opacity(isVisible ? rowOpacity : 0)
+                // Specific Gradient Mask for the 2nd Item in Peek Mode
+                .mask {
+                    if !isFullVisibility && index == 1 {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .white.opacity(0.1), location: 0),
+                                .init(color: .white.opacity(0.0), location: 1.0)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    } else {
+                        Color.white
+                    }
+                }
                 .offset(y: isVisible ? 0 : -15)
                 .animation(
                     .spring(response: 0.3, dampingFraction: 0.8)
-                    .delay(Double(index) * 0.05), // Stagger delay
+                    .delay(isVisible ? Double(index) * 0.05 : 0), 
                     value: isVisible
                 )
+                .animation(.easeInOut(duration: 0.2), value: isFullVisibility)
             }
         }
-        .frame(width: 160) // Slightly wider for delete button
-        // REMOVED PADDING .padding(.top, 10)
-        
-        // HOLE & GAP FIX:
-        // Ensure the entire frame (including spacing and padding) is hit-testable.
-        // Without this, hovering the "gaps" between items would lost hover state.
+        .frame(width: 160)
         .contentShape(Rectangle()) 
     }
 }
