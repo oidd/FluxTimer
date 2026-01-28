@@ -27,7 +27,11 @@ struct StarfieldView: View {
     var body: some View {
         Canvas { context, size in
             let streamerLength: CGFloat = 0.22 
-            let capsulePath = getCapsulePath(in: CGRect(origin: .zero, size: size))
+            // FIX: Use a continuous rounded rect path matching the mask (cornerRadius 42 for height 100), 
+            // and inset by 2px to prevent the 4px stroke from being clipped at the edges.
+            // Note: cornerRadius ratio is 0.42 to match NotificationBannerView's mask.
+            let rect = CGRect(origin: .zero, size: size).insetBy(dx: 2, dy: 2)
+            let capsulePath = Path(roundedRect: rect, cornerRadius: size.height * 0.42, style: .continuous)
             
             // 1. CALCULATE POSITIONS (Head, Mid, Tail and intermediate points for smooth reveal)
             let startP = (sweepProgress - streamerLength + 1.0).truncatingRemainder(dividingBy: 1.0)
@@ -37,33 +41,52 @@ struct StarfieldView: View {
             var lightingPoints: [CGPoint] = []
             for i in 0...4 {
                 let p = (startP + (streamerLength * CGFloat(i) / 4.0)).truncatingRemainder(dividingBy: 1.0)
-                lightingPoints.append(getPerimeterPosition(for: p, in: size))
+                // Use the path itself to find the point (Perfect accuracy for any shape)
+                // Using a non-zero end ensures we get a valid point even at p=0
+                let checkP = max(0.0001, p)
+                if let pt = capsulePath.trimmedPath(from: 0, to: checkP).currentPoint {
+                    lightingPoints.append(pt)
+                } else {
+                    // Fallback (should rarely happen)
+                    lightingPoints.append(CGPoint(x: rect.midX, y: rect.minY)) 
+                }
             }
             
-            let startPos = lightingPoints.first!
-            let endPos = lightingPoints.last!
-            
-            // 2. DRAW VISIBLE STREAMER (流光)
+            // 2. DRAW VISIBLE STREAMER (Segmented for perfect curve following)
             context.drawLayer { layer in
-                let streamerPath: Path
-                if startP < endP {
-                    streamerPath = capsulePath.trimmedPath(from: startP, to: endP)
-                } else {
-                    var p = capsulePath.trimmedPath(from: startP, to: 1.0)
-                    p.addPath(capsulePath.trimmedPath(from: 0.0, to: endP))
-                    streamerPath = p
+                let stepSize: CGFloat = 0.002 // Finer steps for smoother gradient
+                let totalSteps = Int(streamerLength / stepSize)
+                
+                for i in 0..<totalSteps {
+                    let relativePos = CGFloat(i) / CGFloat(totalSteps) // 0.0 to 1.0 along streamer
+                    // Gaussian-like opacity curve: 0 -> 1 -> 0
+                    // Peak at 0.5. 
+                    // Use sine for smooth bell shape: sin(0 to PI)
+                    let opacity = sin(relativePos * .pi) 
+                    
+                    let pStart = (startP + CGFloat(i) * stepSize).truncatingRemainder(dividingBy: 1.0)
+                    let pEnd = (pStart + stepSize).truncatingRemainder(dividingBy: 1.0)
+                    
+                    // Handle wrapping logic for segments
+                    let segmentPath: Path
+                    if pStart < pEnd {
+                        segmentPath = capsulePath.trimmedPath(from: pStart, to: pEnd)
+                    } else {
+                         // Edge case: tiny segment wraps around 1.0 -> 0.0
+                         var p = capsulePath.trimmedPath(from: pStart, to: 1.0)
+                         p.addPath(capsulePath.trimmedPath(from: 0.0, to: pEnd))
+                         segmentPath = p
+                    }
+                    
+                    // Main Glow
+                    layer.stroke(segmentPath, with: .color(.white.opacity(opacity * 0.9)), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    
+                    // Core Brightness
+                    layer.stroke(segmentPath, with: .color(.white.opacity(opacity)), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                 }
                 
-                let streamerGradient = Gradient(colors: [.clear, .white.opacity(0.8), .white, .white.opacity(0.8), .clear])
-                
-                layer.stroke(streamerPath, with: .linearGradient(
-                    streamerGradient, startPoint: startPos, endPoint: endPos
-                ), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                layer.addFilter(.blur(radius: 2.5))
-                
-                layer.stroke(streamerPath, with: .linearGradient(
-                    streamerGradient, startPoint: startPos, endPoint: endPos
-                ), style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
+                // Add a global blur to smooth out the segments
+                layer.addFilter(.blur(radius: 2.0))
             }
             
             // 3. DRAW STARS (Reveal near any part of the streamer)
@@ -75,12 +98,15 @@ struct StarfieldView: View {
                 
                 var maxLocalEffect: CGFloat = 0
                 for i in 0...4 {
-                    let pt = lightingPoints[i]
-                    let d = sqrt(pow(starPos.x - pt.x, 2) + pow(starPos.y - pt.y, 2))
-                    
-                    // Falloff for the "energy" of this specific point
-                    let localEffect = pow(max(0, 1.0 - (d / 90)), 2.2) * weighting[i]
-                    if localEffect > maxLocalEffect { maxLocalEffect = localEffect }
+                    // Safe guard index access although loops match
+                    if i < lightingPoints.count {
+                        let pt = lightingPoints[i]
+                        let d = sqrt(pow(starPos.x - pt.x, 2) + pow(starPos.y - pt.y, 2))
+                        
+                        // Falloff for the "energy" of this specific point
+                        let localEffect = pow(max(0, 1.0 - (d / 90)), 2.2) * weighting[i]
+                        if localEffect > maxLocalEffect { maxLocalEffect = localEffect }
+                    }
                 }
                 
                 // Base opacity (0.04) and flaring reveal
@@ -129,52 +155,5 @@ struct StarfieldView: View {
             ))
         }
         self.stars = newStars
-    }
-    
-    // MARK: - Perimeter Logic
-    
-    private func getCapsulePath(in rect: CGRect) -> Path {
-        let r = rect.height / 2
-        var path = Path()
-        // Top Left corner of the straight segment
-        path.move(to: CGPoint(x: r, y: 0))
-        path.addLine(to: CGPoint(x: rect.width - r, y: 0))
-        path.addArc(center: CGPoint(x: rect.width - r, y: r), radius: r, startAngle: .degrees(-90), endAngle: .degrees(90), clockwise: false)
-        path.addLine(to: CGPoint(x: r, y: rect.height))
-        path.addArc(center: CGPoint(x: r, y: r), radius: r, startAngle: .degrees(90), endAngle: .degrees(270), clockwise: false)
-        path.closeSubpath()
-        return path
-    }
-    
-    private func getPerimeterPosition(for progress: CGFloat, in size: CGSize) -> CGPoint {
-        let r = size.height / 2
-        let w = size.width
-        let h = size.height
-        let straightLen = w - h
-        let curveLen = CGFloat.pi * r
-        let totalPerimeter = 2 * straightLen + 2 * curveLen
-        
-        var current = progress.truncatingRemainder(dividingBy: 1.0) * totalPerimeter
-        
-        // Match the segments of getCapsulePath
-        // 1. Top Straight
-        if current <= straightLen {
-            return CGPoint(x: r + current, y: 0)
-        }
-        current -= straightLen
-        // 2. Right Arc
-        if current <= curveLen {
-            let angle = -CGFloat.pi/2 + (current / curveLen) * CGFloat.pi
-            return CGPoint(x: (w-r) + cos(angle) * r, y: r + sin(angle) * r)
-        }
-        current -= curveLen
-        // 3. Bottom Straight
-        if current <= straightLen {
-            return CGPoint(x: (w-r) - current, y: h)
-        }
-        current -= straightLen
-        // 4. Left Arc
-        let angle = CGFloat.pi/2 + (current / curveLen) * CGFloat.pi
-        return CGPoint(x: r + cos(angle) * r, y: r + sin(angle) * r)
     }
 }
