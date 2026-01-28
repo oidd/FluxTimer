@@ -119,7 +119,7 @@ struct ContentView: View {
                 .frame(width: 50, height: 50)
             }
             .offset(x: 375, y: 50)
-            .zIndex(100) // Topmost
+            .zIndex(100) // Always on Top
             
             // 3. RIGHT WING (Capsule)
             // Starts at x = 437 (425 + 12)
@@ -144,8 +144,7 @@ struct ContentView: View {
                                 savePreset()
                             }
                         )
-                        // Grow from Left (Button side)
-                        .transition(.scale(scale: 0.1, anchor: .leading).combined(with: .opacity))
+                        .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
                         
                         // PRESET LIST (Now specifically shown under the capsule)
                         PresetListView(
@@ -168,8 +167,7 @@ struct ContentView: View {
                 }
             }
             .offset(x: 437, y: 50)
-            .zIndex(10)
-            
+            .zIndex(50) // Behind button, in front of background
         }
         .frame(width: 800, height: 600, alignment: .topLeading)
         .onReceive(timer) { _ in
