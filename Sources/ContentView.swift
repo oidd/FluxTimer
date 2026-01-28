@@ -29,6 +29,7 @@ struct ContentView: View {
     
     // MULTI-TIMER STATE
     @State private var runningTimers: [RunningTimer] = []
+    @State private var hoverLockout = false // Prevent unintended hover during transitions
     
     @State private var savedPresets: [TimerPreset] = [
         TimerPreset(minutes: 5, title: "休息一下"),
@@ -78,14 +79,15 @@ struct ContentView: View {
             HStack(spacing: 12) {
                 Spacer() // Fill from left
                 ForEach($runningTimers) { $timer in
-                    RunningTimerView(timer: $timer, onStop: {
+                    RunningTimerView(timer: $timer, hoverLockout: $hoverLockout, onStop: {
                          stopTimer(timer)
                     })
                     .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
-            .frame(width: 363, height: 50, alignment: .trailing) // Explicit width ending at 363, grow to LEFT
-            .offset(x: 0, y: 50) // Top-Left origin
+            .padding(.trailing, 62) // Maintain 12px gap from button during running
+            .frame(width: 425, height: 80, alignment: .trailing) 
+            .offset(x: 0, y: 35) 
             .zIndex(10)
             
             // 2. CENTER ANCHOR (Button + Presets)
@@ -300,9 +302,11 @@ struct ContentView: View {
 
 struct RunningTimerView: View {
     @Binding var timer: RunningTimer
+    @Binding var hoverLockout: Bool
     var onStop: () -> Void
     
     @State private var isHovering = false
+    @State private var isClosing = false // Two-stage closing flag
     
     // Helper to format time "MM:ss"
     private var formattedTime: String {
@@ -313,8 +317,11 @@ struct RunningTimerView: View {
     
     var body: some View {
         ZStack(alignment: .leading) {
-            // Background Capsule (Only visible when hovering)
-            if isHovering {
+            // Morphing logic
+            let effectiveHover = isHovering && !isClosing
+            
+            // Background Capsule
+            if effectiveHover {
                 Capsule()
                     .fill(.ultraThinMaterial)
                     .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
@@ -323,44 +330,37 @@ struct RunningTimerView: View {
                             .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                     )
                     .matchedGeometryEffect(id: "bg", in: namespace)
-            } else {
-                // Invisible placeholder to match height?
-                // No, sticking to frame height 50 is enough.
             }
 
             HStack(spacing: 8) {
                 // 1. Left Icon: Badge (Hover) OR Progress Ring (Normal)
                 ZStack {
-                    if isHovering {
-                        // Static Badge (Total Minutes)
+                    if effectiveHover {
                         ZStack {
                             Circle()
-                                .fill(Color.white.opacity(0.2)) // Translucent background
+                                .fill(Color.white.opacity(0.2)) 
                             
                             Text("\(Int(timer.totalTime / 60))")
                                 .font(.system(size: 16, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                         }
-                        .frame(width: 42, height: 42) // Matched scaled size
+                        .frame(width: 42, height: 42) 
                         .transition(.scale.combined(with: .opacity))
                     } else {
-                        // Progress Ring
                         TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
                             .transition(.identity)
                     }
                 }
                 
                 // 2. Expanded Info (Visible on Hover)
-                if isHovering {
+                if effectiveHover {
                     VStack(alignment: .leading, spacing: 0) {
-                        // Digital Clock
                         Text(formattedTime)
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .monospacedDigit()
                             .foregroundColor(.white)
                             .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
                         
-                        // Title Marquee
                         MarqueeText(
                             text: timer.title.isEmpty ? "倒计时" : timer.title,
                             font: .system(size: 13, weight: .medium),
@@ -375,12 +375,27 @@ struct RunningTimerView: View {
                     .transition(.move(edge: .trailing).combined(with: .opacity))
                     
                     // Close Button
-                    Button(action: onStop) {
+                    Button(action: {
+                        // START CLOSING SEQUENCE
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            isClosing = true      // Morph back into circle
+                            hoverLockout = true  // Lock other timers' hover
+                        }
+                        
+                        // Wait for morph back animation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            onStop() // Trigger parent removal
+                            
+                            // Re-enable hover after removal is likely done
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                hoverLockout = false
+                            }
+                        }
+                    }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white.opacity(0.8))
                             .frame(width: 24, height: 24)
-                            // Clean style: No background
                             .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -388,21 +403,19 @@ struct RunningTimerView: View {
                     .transition(.scale.combined(with: .opacity))
                 }
             }
-            .padding(.horizontal, isHovering ? 8 : 0) // Consistent horizontal padding
-            // REMOVE VERTICAL PADDING: Lock to 50px height
+            .padding(.horizontal, effectiveHover ? 8 : 0)
         }
-        .frame(height: 50) // Enforce 50px height
-        .fixedSize(horizontal: true, vertical: false) // CRITICAL: Force ZStack to shrink-wrap content
-        // Interaction
+        .frame(height: 50) 
+        .fixedSize(horizontal: true, vertical: false) 
         .onHover { hover in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                isHovering = hover
+            if !hoverLockout && !isClosing {
+                // Softened morphing (Response 0.4)
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    isHovering = hover
+                }
             }
         }
-        // Click to toggle/stop? User said "Click close button to end".
-        // Keep tap on circle as backup? Or remove?
-        // Let's remove the tap on circle so user must use the X, preventing accidental closure.
-        .padding(.vertical, 0) // Clean height
+        .padding(.vertical, 0)
     }
     
     @Namespace private var namespace
