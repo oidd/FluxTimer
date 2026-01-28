@@ -106,12 +106,16 @@ struct DragCapsuleView: View {
                             .fill(.white)
                             .frame(width: 11, height: 14)
                             .opacity(isFavorite ? 1 : 0)
+                            .animation(nil, value: isFavorite) // Jump instantly, no fade flash
                     }
                     .scaleEffect(iconScale)
                     .rotationEffect(.degrees(iconRotation))
                     .contentShape(Rectangle()) // Better hit area
                     .onTapGesture {
                         if minutes > 0 {
+                            if !isFavorite {
+                                triggerBurst()
+                            }
                             onFavoriteToggle()
                         }
                     }
@@ -128,11 +132,6 @@ struct DragCapsuleView: View {
             .background(RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous).fill(.white.opacity(0.2)))
             .padding(.leading, 4)     // Shifted left
             .fixedSize()
-            .onChange(of: isFavorite) { newValue in
-                if newValue {
-                    triggerBurst()
-                }
-            }
             
             Divider()
                 .frame(height: 20)

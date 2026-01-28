@@ -346,13 +346,13 @@ struct RunningTimerView: View {
             // Morphing logic
             let effectiveHover = isHovering && !isClosing
             
-            // Background Capsule
+            // Background Squircle
             if effectiveHover {
-                Capsule()
+                RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous)
                     .fill(.ultraThinMaterial)
                     .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
                     .overlay(
-                        Capsule()
+                        RoundedRectangle(cornerRadius: 50 * 0.42, style: .continuous)
                             .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                     )
                     .matchedGeometryEffect(id: "bg", in: namespace)
@@ -363,7 +363,7 @@ struct RunningTimerView: View {
                 ZStack {
                     if effectiveHover {
                         ZStack {
-                            Circle()
+                            RoundedRectangle(cornerRadius: 42 * 0.42, style: .continuous)
                                 .fill(Color.white.opacity(0.2)) 
                             
                             Text("\(Int(timer.totalTime / 60))")
@@ -429,7 +429,8 @@ struct RunningTimerView: View {
                     .transition(.scale.combined(with: .opacity))
                 }
             }
-            .padding(.horizontal, effectiveHover ? 8 : 0)
+            .padding(.leading, effectiveHover ? 4 : 0)
+            .padding(.trailing, effectiveHover ? 8 : 0)
         }
         .frame(height: 50) 
         .fixedSize(horizontal: true, vertical: false) 

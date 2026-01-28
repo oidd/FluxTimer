@@ -22,9 +22,9 @@ struct PresetListView: View {
                 Button(action: { onSelect(preset) }) {
                     HStack {
                         ZStack {
-                            Circle()
+                            RoundedRectangle(cornerRadius: 30 * 0.42, style: .continuous)
                                 .strokeBorder(.white.opacity(0.3), lineWidth: 1)
-                                .background(Circle().fill(.white.opacity(0.2)))
+                                .background(RoundedRectangle(cornerRadius: 30 * 0.42, style: .continuous).fill(.white.opacity(0.2)))
                                 .frame(width: 30, height: 30)
                             
                             Text("\(preset.minutes)")
