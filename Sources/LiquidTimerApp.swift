@@ -26,7 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView()
         
         floatingPanel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600), // Matched ContentView frame
+            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 600), // Expanded for Drag buffer
             backing: .buffered,
             defer: false
         )

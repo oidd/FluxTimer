@@ -32,7 +32,7 @@ struct PresetListView: View {
                         }
                         
                         Text(preset.title)
-                            .font(.system(size: 13))
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
                             .foregroundColor(.primary)
                             .lineLimit(1)
                         

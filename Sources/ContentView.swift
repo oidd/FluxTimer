@@ -65,7 +65,7 @@ struct ContentView: View {
                 }
             }
             .padding(.trailing, 62) // Maintain 12px gap from button during running
-            .frame(width: 425, height: 80, alignment: .trailing) 
+            .frame(width: 525, height: 80, alignment: .trailing) 
             .offset(x: 0, y: 35) 
             .zIndex(10)
             
@@ -156,7 +156,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .offset(x: 375, y: 50)
+            .offset(x: 475, y: 50)
             .zIndex(100) // Always on Top
             
             // 3. RIGHT WING (Capsule)
@@ -205,10 +205,10 @@ struct ContentView: View {
                     }
                 }
             }
-            .offset(x: 437, y: 50)
+            .offset(x: 537, y: 50)
             .zIndex(50) // Behind button, in front of background
         }
-        .frame(width: 800, height: 600, alignment: .topLeading)
+        .frame(width: 1000, height: 600, alignment: .topLeading)
         .onReceive(timer) { _ in
              for i in runningTimers.indices {
                  if runningTimers[i].remainingTime > 0 {

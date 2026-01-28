@@ -123,12 +123,10 @@ struct DragCapsuleView: View {
                     .monospacedDigit()
                     .offset(y: -0.5) // Optical alignment
             }
-            .padding(.horizontal, 18) // Slightly more horizontal
-            .padding(.vertical, 8)    // Reduced vertical for better breathing room
+            .padding(.horizontal, 14) // Tighter look
+            .padding(.vertical, 10)   // Balanced vertical
             .background(Capsule().fill(.white.opacity(0.2)))
-            .scaleEffect(x: 1.0 + (isDragging ? min(0.02, dragOffset / 3000) : 0),
-                         y: 1.0 - (isDragging ? min(0.04, dragOffset / 2000) : 0))
-            .padding(.leading, 4)
+            .padding(.leading, 4)     // Shifted left
             .fixedSize()
             .onChange(of: isFavorite) { newValue in
                 if newValue {
@@ -138,18 +136,19 @@ struct DragCapsuleView: View {
             
             Divider()
                 .frame(height: 20)
-                .padding(.horizontal, 10)
+                .padding(.horizontal, 4)
                 .opacity(0.5)
 
             // Input Field
             TextField("提醒事项...", text: $title)
                 .textFieldStyle(.plain)
-                .font(.system(size: 14))
+                .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(.primary)
+                .padding(.leading, 4) // Safety buffer to keep text away from divider
                 .onSubmit {
                     onCommit()
                 }
-                .frame(minWidth: 120) 
+                .frame(width: 112) // Balanced for ~8 Chinese characters
             
             // DYNAMIC SPACER
             Spacer(minLength: 0)
