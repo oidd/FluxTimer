@@ -1,6 +1,8 @@
 
 # Mac OS
 .DS_Store
+.AppleDouble
+.LSOverride
 
 # Swift / Xcode
 .build/
@@ -8,6 +10,15 @@
 *.xcodeproj/
 *.xcworkspace/
 .swiftpm/
+xcuserdata/
+DerivedData/
+*.swp
+*.lock
 
 # Logs
 *.log
+
+# Project specific
+build.log
+FluxTimer.app/
+website/视频/
