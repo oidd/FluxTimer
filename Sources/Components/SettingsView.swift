@@ -29,24 +29,9 @@ struct SettingsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Spacer()
-                
-                Button(action: {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        isPresented = false
-                    }
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 20))
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundColor(Color(white: 1.0, opacity: 0.3))
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            // Space for Traffic Lights
+            Spacer()
+                .frame(height: 48)
             
             ScrollView(.vertical, showsIndicators: false) {
                 
@@ -303,12 +288,11 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .frame(width: 440)
-        .frame(maxHeight: 650)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 15)
@@ -319,6 +303,7 @@ struct SettingsView: View {
         .onReceive(timer) { _ in
             checkAccessibility()
         }
+        .ignoresSafeArea(.all)
     }
     
     private func settingsGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {

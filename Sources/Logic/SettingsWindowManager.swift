@@ -18,11 +18,14 @@ class SettingsWindowManager: NSObject, ObservableObject {
     func show() {
         if window == nil {
             let panel = SettingsPanel(
-                contentRect: NSRect(x: 0, y: 0, width: 440, height: 600),
-                styleMask: [.borderless, .resizable],
+                contentRect: NSRect(x: 0, y: 0, width: 440, height: 620),
+                styleMask: [.titled, .closable, .fullSizeContentView],
                 backing: .buffered,
                 defer: false
             )
+            
+            panel.minSize = NSSize(width: 440, height: 620)
+            panel.maxSize = NSSize(width: 440, height: 620)
             
             panel.backgroundColor = .clear
             panel.isOpaque = false
@@ -34,12 +37,24 @@ class SettingsWindowManager: NSObject, ObservableObject {
             panel.titlebarAppearsTransparent = true
             panel.isReleasedWhenClosed = false
             
+            // Disable native minimize and zoom to make them gray
+            panel.standardWindowButton(.miniaturizeButton)?.isEnabled = false
+            panel.standardWindowButton(.zoomButton)?.isEnabled = false
+            
             let hostingView = NSHostingView(rootView: DynamicSettingsView())
-            hostingView.translatesAutoresizingMaskIntoConstraints = false
+            // Ensure hosting view doesn't have a background
+            hostingView.layer?.backgroundColor = NSColor.clear.cgColor
             
             panel.contentView = hostingView
             panel.center()
             
+            // Shift traffic lights for better spacing (down and right)
+            if let titlebarView = panel.standardWindowButton(.closeButton)?.superview {
+                let currentFrame = titlebarView.frame
+                titlebarView.setFrameOrigin(NSPoint(x: 16, y: currentFrame.origin.y - 8))
+            }
+            
+            panel.invalidateShadow()
             self.window = panel
         }
         
