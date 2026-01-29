@@ -222,6 +222,26 @@ class LocalizationManager {
          "松开修饰键开始计时": [
             "zh": "松开修饰键开始计时",
             "en": "Release to start timer"
+        ],
+        "关于 %@": [
+            "zh": "关于 %@",
+            "en": "About %@"
+        ],
+        "隐藏 %@": [
+            "zh": "隐藏 %@",
+            "en": "Hide %@"
+        ],
+        "隐藏其他": [
+            "zh": "隐藏其他",
+            "en": "Hide Others"
+        ],
+        "显示全部": [
+            "zh": "显示全部",
+            "en": "Show All"
+        ],
+        "服务": [
+            "zh": "服务",
+            "en": "Services"
         ]
     ]
     
