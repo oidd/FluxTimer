@@ -16,7 +16,7 @@ enum AppLanguage: String, CaseIterable {
     // Internal display for the picker itself to avoid infinite recursion during init
     var pickerName: String {
         switch self {
-        case .auto: return "自动 / Auto"
+        case .auto: return "跟随系统"
         case .zh: return "简体中文"
         case .en: return "English"
         }
@@ -83,8 +83,8 @@ class LocalizationManager {
             "zh": "倒计时结束",
             "en": "Timer Finished"
         ],
-        "通用": [
-            "zh": "通用",
+        "常规": [
+            "zh": "常规",
             "en": "General"
         ],
         "开机自启动": [
@@ -112,8 +112,8 @@ class LocalizationManager {
             "en": "Please keep at least one notification method"
         ],
         "语言": [
-            "zh": "语言",
-            "en": "Language"
+            "zh": "语言 / Language",
+            "en": "Language / 语言"
         ],
         "语言：自动": [
             "zh": "自动",

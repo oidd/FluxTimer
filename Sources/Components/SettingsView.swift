@@ -34,9 +34,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 // Header
                 HStack {
-                    Text(l10n.t("设置"))
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.primary)
+                    // Removed title "设置"
                     
                     Spacer()
                     
@@ -56,80 +54,92 @@ struct SettingsView: View {
                 .padding(.vertical, 16)
                 
                 VStack(spacing: 8) {
-                    // Row: General
-                    settingsRow(title: l10n.t("开机自启动")) {
-                        Toggle("", isOn: $launchAtLogin)
-                            .toggleStyle(SwitchToggleStyle(tint: .accentColor))
-                            .onChange(of: launchAtLogin) { newValue in
-                                toggleLaunchAtLogin(enabled: newValue)
-                            }
-                            .labelsHidden()
-                    }
-                    
-                    // Row: Language
-                    settingsRow(title: l10n.t("语言")) {
-                        Picker("", selection: $appLanguage) {
-                            ForEach(AppLanguage.allCases, id: \.self) { lang in
-                                Text(lang.pickerName).tag(lang)
-                            }
+                    // Section Header: General
+                    Text(l10n.t("常规"))
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    settingsGroup {
+                        // Row: General
+                        settingsRow(title: l10n.t("开机自启动")) {
+                            Toggle("", isOn: $launchAtLogin)
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                .onChange(of: launchAtLogin) { newValue in
+                                    toggleLaunchAtLogin(enabled: newValue)
+                                }
+                                .labelsHidden()
                         }
-                        .pickerStyle(.menu)
-                        .labelsHidden()
-                        .frame(width: 110)
-                    }
-                    
-                    // Row: Prompt Sound
-                    settingsRow(title: l10n.t("提示音效")) {
-                        Toggle("", isOn: $enableSound)
-                            .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                        
+                        Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
+                        
+                        // Row: Language
+                        settingsRow(title: l10n.t("语言")) {
+                            Picker("", selection: $appLanguage) {
+                                ForEach(AppLanguage.allCases, id: \.self) { lang in
+                                    Text(lang.pickerName).tag(lang)
+                                }
+                            }
+                            .pickerStyle(.menu)
                             .labelsHidden()
+                            .frame(width: 110)
+                        }
+                        
+                        Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
+                        
+                        // Row: Prompt Sound
+                        settingsRow(title: l10n.t("提示音效")) {
+                            Toggle("", isOn: $enableSound)
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                .labelsHidden()
+                        }
                     }
                     
                     // Extend Time moved to floating island group
                     
                     // Row: Notification Method (Consolidated)
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(l10n.t("通知方式"))
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 4)
-                        
+                    Text(l10n.t("通知方式"))
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    settingsGroup {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack(spacing: 24) {
-                                Toggle(l10n.t("悬浮岛"), isOn: $useFloatingIsland)
-                                    .toggleStyle(CheckboxToggleStyle())
-                                    .disabled(useFloatingIsland && !useSystemNotification) // Only disable if it's the LAST one ON
-                                
-                                Toggle(l10n.t("系统通知"), isOn: $useSystemNotification)
-                                    .toggleStyle(CheckboxToggleStyle())
-                                    .disabled(useSystemNotification && !useFloatingIsland) // Only disable if it's the LAST one ON
+                                    Toggle(l10n.t("悬浮岛"), isOn: $useFloatingIsland)
+                                        .toggleStyle(CheckboxToggleStyle())
+                                        .disabled(useFloatingIsland && !useSystemNotification) // Only disable if it's the LAST one ON
                                     
-                                Spacer()
-                            }
-                            .onAppear {
-                                // Auto-recovery: If both are somehow off (legacy state), force one on
-                                if !useFloatingIsland && !useSystemNotification {
-                                    useFloatingIsland = true
+                                    Toggle(l10n.t("系统通知"), isOn: $useSystemNotification)
+                                        .toggleStyle(CheckboxToggleStyle())
+                                        .disabled(useSystemNotification && !useFloatingIsland) // Only disable if it's the LAST one ON
+                                        
+                                    Spacer()
                                 }
-                            }
-                            
-                            HStack {
-                                Button(action: {
-                                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
-                                        NSWorkspace.shared.open(url)
+                                .onAppear {
+                                    // Auto-recovery: If both are somehow off (legacy state), force one on
+                                    if !useFloatingIsland && !useSystemNotification {
+                                        useFloatingIsland = true
                                     }
-                                }) {
-                                    Text(l10n.t("打开系统通知设置..."))
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.blue.opacity(0.8))
                                 }
-                                .buttonStyle(.plain)
-                            }
+                                
+                                HStack {
+                                    Button(action: {
+                                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+                                            NSWorkspace.shared.open(url)
+                                        }
+                                    }) {
+                                        Text(l10n.t("打开系统通知设置..."))
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.blue.opacity(0.8))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
-                        .background(Color.white.opacity(0.04))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .padding(.top, 4)
 
@@ -141,7 +151,7 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 4)
                             
-                            VStack(spacing: 8) {
+                            settingsGroup {
                                 // 1. Extend Time (Moved here)
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -167,8 +177,8 @@ struct SettingsView: View {
                                 }
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
-                                .background(Color.white.opacity(0.04))
-                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                
+                                Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
                                 
                                 // 2. Auto Dismiss Toggle
                                 settingsRow(title: l10n.t("30秒自动关闭")) {
@@ -212,6 +222,14 @@ struct SettingsView: View {
         ))
     }
     
+    private func settingsGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        VStack(spacing: 0) {
+            content()
+        }
+        .background(Color.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
     private func settingsRow<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         HStack {
             Text(title)
@@ -224,8 +242,6 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(Color.white.opacity(0.04))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .frame(maxWidth: .infinity)
     }
     
@@ -247,7 +263,14 @@ struct SettingsView: View {
     private func snoozeInput(value: Binding<Int>) -> some View {
         TextField("", value: value, formatter: NumberFormatter())
             .multilineTextAlignment(.center)
-            .textFieldStyle(.roundedBorder)
+            .textFieldStyle(.plain)
+            .padding(.vertical, 4)
             .frame(width: 40)
+            .background(Color.white.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
+            )
     }
 }
