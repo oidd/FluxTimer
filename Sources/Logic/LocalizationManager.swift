@@ -65,11 +65,11 @@ class LocalizationManager {
         ],
         "休息一下": [
             "zh": "休息一下",
-            "en": "Take a Break"
+            "en": "Rest"
         ],
         "番茄专注": [
             "zh": "番茄专注",
-            "en": "Pomodoro"
+            "en": "Focus"
         ],
         "泡面": [
             "zh": "泡面",

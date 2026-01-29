@@ -33,10 +33,8 @@ struct ContentView: View {
     @State private var hoverLockout = false // Prevent unintended hover during transitions
     
     @State private var savedPresets: [TimerPreset] = [
-        TimerPreset(minutes: 1, title: LocalizationManager.shared.t("1m 测试")),
         TimerPreset(minutes: 5, title: LocalizationManager.shared.t("休息一下")),
-        TimerPreset(minutes: 25, title: LocalizationManager.shared.t("番茄专注")),
-        TimerPreset(minutes: 3, title: LocalizationManager.shared.t("泡面"))
+        TimerPreset(minutes: 25, title: LocalizationManager.shared.t("番茄专注"))
     ]
     
     // PERSISTENT SETTINGS
