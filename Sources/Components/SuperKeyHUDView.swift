@@ -30,6 +30,7 @@ struct SuperKeyHUDView: View {
                 .font(.system(size: 12))
                 .foregroundColor(.secondary.opacity(0.8))
         }
+        .frame(minWidth: 220) // Natural width stability
         .padding(.horizontal, 40)
         .padding(.vertical, 30)
         .background(.ultraThinMaterial)

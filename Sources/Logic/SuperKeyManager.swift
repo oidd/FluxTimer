@@ -183,7 +183,7 @@ class SuperKeyManager: ObservableObject {
         
         if hudWindow == nil {
             let panel = NSPanel(
-                contentRect: NSRect(x: 0, y: 0, width: 300, height: 200),
+                contentRect: NSRect(x: 0, y: 0, width: 500, height: 400),
                 styleMask: [.borderless, .nonactivatingPanel], 
                 backing: .buffered,
                 defer: false
@@ -204,7 +204,7 @@ class SuperKeyManager: ObservableObject {
             
             // Create a container view to hold the hosting view
             // This often helps stabilize layout for borderless windows
-            let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 200))
+            let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: 400))
             containerView.addSubview(hostingView)
             
             NSLayoutConstraint.activate([

@@ -381,7 +381,15 @@ struct SettingsView: View {
     }
 
     private func checkAccessibility() {
-        isAccessibilityTrusted = AXIsProcessTrusted()
+        let currentStatus = AXIsProcessTrusted()
+        
+        // Logic: If previous state was NOT trusted, and now it IS trusted, relaunch.
+        if !isAccessibilityTrusted && currentStatus {
+            print("Accessibility permission granted. Relaunching to ensure global monitors are correctly attached.")
+            AppDelegate.relaunch()
+        }
+        
+        isAccessibilityTrusted = currentStatus
     }
 }
 

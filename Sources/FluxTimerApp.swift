@@ -44,4 +44,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         floatingPanel?.center() // Center on screen initially
         floatingPanel?.makeKeyAndOrderFront(nil)
     }
+
+    static func relaunch() {
+        let path = Bundle.main.bundlePath
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        // Use a shell to sleep briefly and then open the app.
+        // $0 in the script will be the path passed as the third argument.
+        process.arguments = ["-c", "sleep 0.5; open \"$0\"", path]
+        
+        do {
+            try process.run()
+            // Using exit(0) to immediately quit the current process
+            // so LaunchServices doesn't see a conflict.
+            exit(0)
+        } catch {
+            print("Failed to relaunch application: \(error.localizedDescription)")
+        }
+    }
 }
