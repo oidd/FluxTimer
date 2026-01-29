@@ -122,7 +122,7 @@ struct SettingsView: View {
                             
                             if enableSuperShortcut {
                                 HStack {
-                                    Text(l10n.t("录入快捷键"))
+                                    Text(l10n.t("快捷键组合"))
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(.primary.opacity(0.9))
                                     

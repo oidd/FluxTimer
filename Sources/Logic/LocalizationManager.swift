@@ -179,9 +179,9 @@ class LocalizationManager {
             "zh": "按下两个修饰键...",
             "en": "Press 2 modifiers..."
         ],
-        "录入快捷键": [
-            "zh": "录入快捷键",
-            "en": "Record Shortcut"
+        "快捷键组合": [
+            "zh": "快捷键组合",
+            "en": "Shortcut Combo"
         ],
         "需要辅助功能权限": [
             "zh": "需要辅助功能权限",
