@@ -16,8 +16,17 @@ struct SettingsView: View {
     @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
     @AppStorage("autoDismiss30s") private var autoDismiss30s = true
     
+    // Super Shortcut
+    @AppStorage("enableSuperShortcut") private var enableSuperShortcut = true
+    @AppStorage("superShortcutModifiers") private var superShortcutModifiers = 1572864 // Cmd + Opt
+    @State private var isRecordingShortcut = false
+    
     private let l10n = LocalizationManager.shared
     @State private var dragOffset: CGSize = .zero
+    @State private var isAccessibilityTrusted = AXIsProcessTrusted()
+    
+    // Poll permission changes
+    let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     
     var body: some View {
         ZStack {
@@ -93,6 +102,88 @@ struct SettingsView: View {
                             Toggle("", isOn: $enableSound)
                                 .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                                 .labelsHidden()
+                        }
+                        
+                        Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
+                        
+                        // Row: Super Shortcut
+                        VStack(spacing: 0) {
+                            settingsRow(title: "超级快捷键") {
+                                Toggle("", isOn: $enableSuperShortcut)
+                                    .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                    .labelsHidden()
+                            }
+                            
+                            if enableSuperShortcut {
+                                HStack {
+                                    Text("快捷键组合")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary)
+                                    
+                                    Spacer()
+                                    
+                                    Button(action: {
+                                        isRecordingShortcut = true
+                                    }) {
+                                        Text(isRecordingShortcut ? "按下两个修饰键..." : ModifierKeyUtils.readable(from: superShortcutModifiers))
+                                            .font(.system(size: 11, weight: .medium))
+                                            .foregroundColor(isRecordingShortcut ? .accentColor : .primary.opacity(0.8))
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(isRecordingShortcut ? Color.accentColor.opacity(0.2) : Color.white.opacity(0.1))
+                                            .cornerRadius(6)
+                                    }
+                                    .buttonStyle(.plain)
+                                    // Hidden key monitor for recording
+                                    .background(
+                                        Group {
+                                            if isRecordingShortcut {
+                                                ActivityMonitorView(isRecording: $isRecordingShortcut, modifierFlags: $superShortcutModifiers)
+                                                    .frame(width: 0, height: 0)
+                                            }
+                                        }
+                                    )
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 12)
+                                
+                                // Permission Warning
+                                if !isAccessibilityTrusted {
+                                    HStack(alignment: .top, spacing: 6) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(.orange)
+                                            .font(.system(size: 12))
+                                            .padding(.top, 2)
+                                        
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            Text("需要辅助功能权限")
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundColor(.primary)
+                                            
+                                            Text("以监听全局快捷键，请在“系统设置 > 隐私与安全性 > 辅助功能”中开启。")
+                                                .font(.system(size: 11))
+                                                .foregroundColor(.secondary)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            
+                                            Button(action: {
+                                                if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                                                    NSWorkspace.shared.open(url)
+                                                }
+                                                // Trigger manual polling
+                                                checkAccessibility()
+                                            }) {
+                                                Text("打开设置")
+                                                    .font(.system(size: 11, weight: .medium))
+                                                    .foregroundColor(.blue)
+                                            }
+                                            .buttonStyle(.plain)
+                                            .padding(.top, 2)
+                                        }
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.bottom, 12)
+                                }
+                            }
                         }
                     }
                     
@@ -220,6 +311,9 @@ struct SettingsView: View {
             insertion: .scale(scale: 0.92).combined(with: .opacity),
             removal: .scale(scale: 0.95).combined(with: .opacity)
         ))
+        .onReceive(timer) { _ in
+            checkAccessibility()
+        }
     }
     
     private func settingsGroup<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -272,5 +366,103 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
             )
+    }
+
+    private func checkAccessibility() {
+        isAccessibilityTrusted = AXIsProcessTrusted()
+    }
+}
+
+// Helper to display modifiers
+struct ModifierKeyUtils {
+    static func readable(from flags: Int) -> String {
+        var str = ""
+        let modifierFlags = NSEvent.ModifierFlags(rawValue: UInt(flags))
+        
+        if modifierFlags.contains(.control) { str += "⌃ " }
+        if modifierFlags.contains(.option) { str += "⌥ " }
+        if modifierFlags.contains(.shift) { str += "⇧ " }
+        if modifierFlags.contains(.command) { str += "⌘ " }
+        
+        return str.trimmingCharacters(in: .whitespaces)
+    }
+}
+
+// Representable to monitor keys locally for recording
+struct ActivityMonitorView: NSViewRepresentable {
+    @Binding var isRecording: Bool
+    @Binding var modifierFlags: Int
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if isRecording {
+            DispatchQueue.main.async {
+                // Ensure the view is in the window hierarchy before making it first responder
+                if nsView.window != nil {
+                     nsView.window?.makeFirstResponder(context.coordinator)
+                }
+            }
+        } else {
+             // Ensure we stop recording if state changes externally
+             DispatchQueue.main.async {
+                 if nsView.window?.firstResponder == context.coordinator {
+                     nsView.window?.makeFirstResponder(nil)
+                 }
+             }
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+    
+    class Coordinator: NSResponder {
+        var parent: ActivityMonitorView
+        
+        init(parent: ActivityMonitorView) {
+            self.parent = parent
+            super.init()
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        // Need to become first responder to receive flagsChanged
+        override var acceptsFirstResponder: Bool { true }
+        
+        override func flagsChanged(with event: NSEvent) {
+            guard parent.isRecording else { return }
+            
+            let currentModifiers = event.modifierFlags.rawValue
+            let masked = currentModifiers & ~NSEvent.ModifierFlags.capsLock.rawValue & ~NSEvent.ModifierFlags.numericPad.rawValue
+            
+            // Allow user to check what they are pressing
+            // If they press and release without 2 keys, we might need logic.
+            // Requirement: "Must be two modifier keys"
+            
+            // Check count of bits set?
+            // Command=1<<20, Option=1<<19, Control=1<<18, Shift=1<<17
+            var count = 0
+            if (masked & NSEvent.ModifierFlags.command.rawValue) != 0 { count += 1 }
+            if (masked & NSEvent.ModifierFlags.option.rawValue) != 0 { count += 1 }
+            if (masked & NSEvent.ModifierFlags.control.rawValue) != 0 { count += 1 }
+            if (masked & NSEvent.ModifierFlags.shift.rawValue) != 0 { count += 1 }
+            
+            if count == 2 {
+                // Success
+                let exactModifiers = Int(masked)
+                DispatchQueue.main.async {
+                    self.parent.modifierFlags = exactModifiers
+                    self.parent.isRecording = false
+                    // Resign first responder to stop monitoring locally
+                    self.resignFirstResponder()
+                }
+            }
+        }
     }
 }

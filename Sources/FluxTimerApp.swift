@@ -22,6 +22,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var floatingPanel: FloatingPanel?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Initialize Super Shortcut Manager
+        _ = SuperKeyManager.shared
+        
         // Create the floating panel
         let contentView = ContentView()
         

@@ -268,6 +268,16 @@ struct ContentView: View {
         .onChange(of: isAlwaysOnTop) { _ in
             updateWindowLevel()
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CreateSuperKeyTimer"))) { notification in
+            if let mins = notification.userInfo?["minutes"] as? Int {
+                // Directly start timer
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    self.minutes = mins
+                    self.timerTitle = "" // Default title
+                    startNewTimer()
+                }
+            }
+        }
         .onReceive(timer) { _ in
              for i in runningTimers.indices {
                  if runningTimers[i].remainingTime > 0 {
