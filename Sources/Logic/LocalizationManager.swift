@@ -195,6 +195,22 @@ class LocalizationManager {
             "zh": "打开设置",
             "en": "Open Settings"
         ],
+        "最近": [
+            "zh": "最近",
+            "en": "Recent"
+        ],
+        "最后一条记录": [
+            "zh": "最后一条记录",
+            "en": "Last Record"
+        ],
+        "展现最后一次结束的倒计时记录": [
+            "zh": "展现最后一次结束的倒计时记录",
+            "en": "Show the last finished timer record."
+        ],
+        "流光倒计时": [
+            "zh": "流光倒计时",
+            "en": "Flux Timer"
+        ],
         "30秒自动关闭": [
             "zh": "30秒自动关闭",
             "en": "Auto-close in 30s"

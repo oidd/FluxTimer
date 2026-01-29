@@ -15,6 +15,7 @@ struct SettingsView: View {
     @AppStorage("snoozeOption2") private var snoozeOption2: Int = 5
     @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
     @AppStorage("autoDismiss30s") private var autoDismiss30s = true
+    @AppStorage("enableLastRecord") private var enableLastRecord = true
     
     // Super Shortcut
     @AppStorage("enableSuperShortcut") private var enableSuperShortcut = true
@@ -73,12 +74,33 @@ struct SettingsView: View {
                         
                         Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
                         
-                        // Row: Prompt Sound
                         settingsRow(title: l10n.t("提示音效")) {
                             Toggle("", isOn: $enableSound)
                                 .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                                 .labelsHidden()
                         }
+                        
+                        Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
+                        
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(l10n.t("最后一条记录"))
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.primary.opacity(0.9))
+                                
+                                Text(l10n.t("展现最后一次结束的倒计时记录"))
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.secondary.opacity(0.8))
+                            }
+                            
+                            Spacer()
+                            
+                            Toggle("", isOn: $enableLastRecord)
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                .labelsHidden()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
                         
                         Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
                         

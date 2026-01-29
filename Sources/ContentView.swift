@@ -45,6 +45,9 @@ struct ContentView: View {
     @AppStorage("useSystemNotification") private var useSystemNotification = false
     @AppStorage("enableSound") private var enableSound = true
     @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
+    @AppStorage("enableLastRecord") private var enableLastRecord = true
+    @AppStorage("lastRecordMinutes") private var lastRecordMinutes: Int = 0
+    @AppStorage("lastRecordTitle") private var lastRecordTitle: String = ""
 
     
     private let l10n = LocalizationManager.shared
@@ -222,21 +225,34 @@ struct ContentView: View {
                         .transition(.opacity.combined(with: .scale(scale: 0.9, anchor: .leading)))
                         
                         // PRESET LIST (Now specifically shown under the capsule)
-                        PresetListView(
-                            isVisible: showPresets, 
-                            isFullVisibility: true, 
-                            presets: $savedPresets,
-                            onSelect: { preset in
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                    self.minutes = preset.minutes
-                                    self.timerTitle = preset.title
-                                    startNewTimer()
+                            PresetListView(
+                                isVisible: showPresets, 
+                                isFullVisibility: true, 
+                                presets: $savedPresets,
+                                lastRecord: enableLastRecord && lastRecordMinutes > 0 ? TimerPreset(minutes: lastRecordMinutes, title: lastRecordTitle) : nil,
+                                onSelect: { preset in
+                                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                        self.minutes = preset.minutes
+                                        self.timerTitle = preset.title
+                                        startNewTimer()
+                                    }
+                                },
+                                onDelete: { preset in
+                                    deletePreset(preset)
+                                },
+                                onFavoriteLast: { preset in
+                                    // Toggle favorite status
+                                    if let index = self.savedPresets.firstIndex(where: { $0.minutes == preset.minutes && $0.title == preset.title }) {
+                                        withAnimation {
+                                            _ = self.savedPresets.remove(at: index)
+                                        }
+                                    } else {
+                                        withAnimation {
+                                            self.savedPresets.append(preset)
+                                        }
+                                    }
                                 }
-                            },
-                            onDelete: { preset in
-                                deletePreset(preset)
-                            }
-                        )
+                            )
                         .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
@@ -266,10 +282,10 @@ struct ContentView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CreateSuperKeyTimer"))) { notification in
             if let mins = notification.userInfo?["minutes"] as? Int {
-                // Directly start timer
+                // Directly start timer with default title if needed
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     self.minutes = mins
-                    self.timerTitle = "" // Default title
+                    self.timerTitle = l10n.t("流光倒计时") 
                     startNewTimer()
                 }
             }
@@ -284,6 +300,12 @@ struct ContentView: View {
                      // Trigger Notification ONCE
                      if !runningTimers[i].hasNotified {
                          runningTimers[i].hasNotified = true
+                         
+                         // Record Last Finished
+                         lastRecordMinutes = Int(runningTimers[i].totalTime / 60)
+                         let recordTitle = runningTimers[i].title.trimmingCharacters(in: .whitespacesAndNewlines)
+                         lastRecordTitle = recordTitle.isEmpty ? l10n.t("流光倒计时") : recordTitle
+                         
                          let timerId = runningTimers[i].id
                          let title = runningTimers[i].title
                          
@@ -385,7 +407,7 @@ struct ContentView: View {
         if let index = savedPresets.firstIndex(where: { $0.minutes == minutes && $0.title == effectiveTitle }) {
             // Un-favorite: Remove matching preset
             withAnimation {
-                savedPresets.remove(at: index)
+                _ = self.savedPresets.remove(at: index)
             }
         } else {
             // Favorite: Add new preset
