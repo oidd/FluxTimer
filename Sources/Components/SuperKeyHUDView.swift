@@ -2,11 +2,12 @@ import SwiftUI
 
 struct SuperKeyHUDView: View {
     let inputText: String
+    @State private var languageUpdate = UUID()
     
     var body: some View {
         VStack(spacing: 12) {
             // Title
-            Text("流光倒计时")
+            Text(LocalizationManager.shared.t("倒计时"))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.secondary)
             
@@ -17,7 +18,7 @@ struct SuperKeyHUDView: View {
                     .monospacedDigit()
                     .foregroundColor(inputText.isEmpty ? .secondary.opacity(0.3) : .primary)
                 
-                Text("min")
+                Text(LocalizationManager.shared.t("分钟"))
                     .font(.system(size: 20, weight: .medium))
                     .foregroundColor(.secondary)
                     .padding(.bottom, 8)
@@ -25,7 +26,7 @@ struct SuperKeyHUDView: View {
             .frame(height: 80)
             
             // Instruction
-            Text(inputText.isEmpty ? "保持按住修饰键，输入数字" : "松开修饰键开始计时")
+            Text(inputText.isEmpty ? LocalizationManager.shared.t("保持按住修饰键，输入数字") : LocalizationManager.shared.t("松开修饰键开始计时"))
                 .font(.system(size: 12))
                 .foregroundColor(.secondary.opacity(0.8))
         }
@@ -38,5 +39,9 @@ struct SuperKeyHUDView: View {
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
+        .id(languageUpdate)
+        .onReceive(NotificationCenter.default.publisher(for: LocalizationManager.languageChangedNotification)) { _ in
+            languageUpdate = UUID()
+        }
     }
 }

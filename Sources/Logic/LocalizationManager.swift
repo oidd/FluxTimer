@@ -25,7 +25,11 @@ enum AppLanguage: String, CaseIterable {
 
 class LocalizationManager {
     static let shared = LocalizationManager()
+    static let languageChangedNotification = Notification.Name("AppLanguageChanged")
     
+    func notifyLanguageChange() {
+        NotificationCenter.default.post(name: LocalizationManager.languageChangedNotification, object: nil)
+    }
     private let translations: [String: [String: String]] = [
         "始终置顶": [
             "zh": "始终置顶",
@@ -146,6 +150,46 @@ class LocalizationManager {
         "提示音效": [
             "zh": "提示音效",
             "en": "Prompt Sound"
+        ],
+        "超级快捷键": [
+            "zh": "超级快捷键",
+            "en": "Super Shortcut"
+        ],
+        "按住快捷键并点按数字，快速创建倒计时": [
+            "zh": "按住快捷键并点按数字，快速创建倒计时",
+            "en": "Hold keys and type digits to start timer quickly"
+        ],
+        "按下两个修饰键...": [
+            "zh": "按下两个修饰键...",
+            "en": "Press 2 modifiers..."
+        ],
+        "录入快捷键": [
+            "zh": "录入快捷键",
+            "en": "Record Shortcut"
+        ],
+        "需要辅助功能权限": [
+            "zh": "需要辅助功能权限",
+            "en": "Accessibility Permission Required"
+        ],
+        "以监听全局快捷键，请在“系统设置 > 隐私与安全性 > 辅助功能”中开启。": [
+            "zh": "以监听全局快捷键，请在“系统设置 > 隐私与安全性 > 辅助功能”中开启。",
+            "en": "Enable strict privacy access in System Settings > Privacy & Security > Accessibility to listen for global hotkeys."
+        ],
+        "打开设置": [
+            "zh": "打开设置",
+            "en": "Open Settings"
+        ],
+        "30秒自动关闭": [
+            "zh": "30秒自动关闭",
+            "en": "Auto-close in 30s"
+        ],
+        "保持按住修饰键，输入数字": [
+            "zh": "保持按住修饰键，输入数字",
+            "en": "Hold modifiers, type digits"
+        ],
+         "松开修饰键开始计时": [
+            "zh": "松开修饰键开始计时",
+            "en": "Release to start timer"
         ]
     ]
     

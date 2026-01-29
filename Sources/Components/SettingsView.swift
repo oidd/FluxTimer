@@ -22,45 +22,33 @@ struct SettingsView: View {
     @State private var isRecordingShortcut = false
     
     private let l10n = LocalizationManager.shared
-    @State private var dragOffset: CGSize = .zero
     @State private var isAccessibilityTrusted = AXIsProcessTrusted()
     
     // Poll permission changes
     let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
     
     var body: some View {
-        ZStack {
-            // Background Dimmer (Invisble but functional for tap-to-dismiss)
-            Color.black.opacity(0.001)
-                .edgesIgnoringSafeArea(.all)
-                .onTapGesture {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Spacer()
+                
+                Button(action: {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         isPresented = false
                     }
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundColor(Color(white: 1.0, opacity: 0.3))
                 }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
             
-            // Settings Panel
-            VStack(spacing: 0) {
-                // Header
-                HStack {
-                    // Removed title "设置"
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            isPresented = false
-                        }
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 20))
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundColor(Color(white: 1.0, opacity: 0.3))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 16)
+            ScrollView(.vertical, showsIndicators: false) {
                 
                 VStack(spacing: 8) {
                     // Section Header: General
@@ -93,6 +81,9 @@ struct SettingsView: View {
                             .pickerStyle(.menu)
                             .labelsHidden()
                             .frame(width: 110)
+                            .onChange(of: appLanguage) { _ in
+                                LocalizationManager.shared.notifyLanguageChange()
+                            }
                         }
                         
                         Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
@@ -108,24 +99,39 @@ struct SettingsView: View {
                         
                         // Row: Super Shortcut
                         VStack(spacing: 0) {
-                            settingsRow(title: "超级快捷键") {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(l10n.t("超级快捷键"))
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.primary.opacity(0.9))
+                                    
+                                    Text(l10n.t("按住快捷键并点按数字，快速创建倒计时"))
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.secondary.opacity(0.8))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                
+                                Spacer()
+                                
                                 Toggle("", isOn: $enableSuperShortcut)
                                     .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                                     .labelsHidden()
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
                             
                             if enableSuperShortcut {
                                 HStack {
-                                    Text("快捷键组合")
-                                        .font(.system(size: 11))
-                                        .foregroundColor(.secondary)
+                                    Text(l10n.t("录入快捷键"))
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.primary.opacity(0.9))
                                     
                                     Spacer()
                                     
                                     Button(action: {
                                         isRecordingShortcut = true
                                     }) {
-                                        Text(isRecordingShortcut ? "按下两个修饰键..." : ModifierKeyUtils.readable(from: superShortcutModifiers))
+                                        Text(isRecordingShortcut ? l10n.t("按下两个修饰键...") : ModifierKeyUtils.readable(from: superShortcutModifiers))
                                             .font(.system(size: 11, weight: .medium))
                                             .foregroundColor(isRecordingShortcut ? .accentColor : .primary.opacity(0.8))
                                             .padding(.horizontal, 8)
@@ -134,7 +140,6 @@ struct SettingsView: View {
                                             .cornerRadius(6)
                                     }
                                     .buttonStyle(.plain)
-                                    // Hidden key monitor for recording
                                     .background(
                                         Group {
                                             if isRecordingShortcut {
@@ -145,7 +150,7 @@ struct SettingsView: View {
                                     )
                                 }
                                 .padding(.horizontal, 16)
-                                .padding(.bottom, 12)
+                                .padding(.vertical, 10)
                                 
                                 // Permission Warning
                                 if !isAccessibilityTrusted {
@@ -156,11 +161,11 @@ struct SettingsView: View {
                                             .padding(.top, 2)
                                         
                                         VStack(alignment: .leading, spacing: 3) {
-                                            Text("需要辅助功能权限")
+                                            Text(l10n.t("需要辅助功能权限"))
                                                 .font(.system(size: 12, weight: .medium))
                                                 .foregroundColor(.primary)
                                             
-                                            Text("以监听全局快捷键，请在“系统设置 > 隐私与安全性 > 辅助功能”中开启。")
+                                            Text(l10n.t("以监听全局快捷键，请在“系统设置 > 隐私与安全性 > 辅助功能”中开启。"))
                                                 .font(.system(size: 11))
                                                 .foregroundColor(.secondary)
                                                 .fixedSize(horizontal: false, vertical: true)
@@ -169,10 +174,9 @@ struct SettingsView: View {
                                                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                                                     NSWorkspace.shared.open(url)
                                                 }
-                                                // Trigger manual polling
                                                 checkAccessibility()
                                             }) {
-                                                Text("打开设置")
+                                                Text(l10n.t("打开设置"))
                                                     .font(.system(size: 11, weight: .medium))
                                                     .foregroundColor(.blue)
                                             }
@@ -253,6 +257,7 @@ struct SettingsView: View {
                                         Text(l10n.t("用于悬浮岛上快捷延长计时时间"))
                                             .font(.system(size: 11))
                                             .foregroundColor(.secondary.opacity(0.8))
+                                            .fixedSize(horizontal: false, vertical: true)
                                     }
                                     
                                     Spacer()
@@ -261,7 +266,7 @@ struct SettingsView: View {
                                         snoozeInput(value: $snoozeOption1)
                                         snoozeInput(value: $snoozeOption2)
                                         snoozeInput(value: $snoozeOption3)
-                                        Text("min")
+                                        Text(l10n.t("分钟"))
                                             .font(.system(size: 13))
                                             .foregroundColor(.secondary)
                                     }
@@ -286,27 +291,16 @@ struct SettingsView: View {
                 .padding(.bottom, 20)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(width: 440) // Allow height to be dynamic
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 15)
-            .offset(dragOffset)
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        dragOffset = value.translation
-                    }
-                    .onEnded { _ in
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                            dragOffset = .zero
-                        }
-                    }
-            )
         }
+        .frame(width: 440)
+        .frame(maxHeight: 650)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 15)
         .transition(.asymmetric(
             insertion: .scale(scale: 0.92).combined(with: .opacity),
             removal: .scale(scale: 0.95).combined(with: .opacity)

@@ -45,7 +45,7 @@ struct ContentView: View {
     @AppStorage("useSystemNotification") private var useSystemNotification = false
     @AppStorage("enableSound") private var enableSound = true
     @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
-    @State private var showSettings = false
+
     
     private let l10n = LocalizationManager.shared
     
@@ -165,7 +165,7 @@ struct ContentView: View {
                     Toggle(l10n.t("始终置顶"), isOn: $isAlwaysOnTop)
                     
                     Button(l10n.t("设置")) {
-                        showSettings = true
+                        SettingsWindowManager.shared.show()
                     }
                     
                     Divider()
@@ -244,11 +244,7 @@ struct ContentView: View {
             .offset(x: 537, y: 50)
             .zIndex(50) // Behind button, in front of background
             
-            // 4. SETTINGS OVERLAY
-            if showSettings {
-                SettingsView(isPresented: $showSettings)
-                    .zIndex(200)
-            }
+
         }
         .frame(width: 1000, height: 600, alignment: .topLeading)
         .onAppear {

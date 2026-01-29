@@ -32,35 +32,34 @@ class SuperKeyManager: ObservableObject {
     private func setupMonitors() {
         // Global monitor for modifier changes (to detect trigger)
         monitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
-            self?.handleEvent(event, source: "Global")
+            self?.handleEvent(event)
         }
         
         // Local monitor (in case app is active)
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { [weak self] event in
-            self?.handleEvent(event, source: "Local")
+            self?.handleEvent(event)
             return event
         }
     }
     
 
-    private func handleEvent(_ event: NSEvent, source: String) {
+    private func handleEvent(_ event: NSEvent) {
         // Run on Main Thread
         if Thread.isMainThread {
-            processEvent(event, source: source)
+            processEvent(event)
         } else {
             DispatchQueue.main.async {
-                self.processEvent(event, source: source)
+                self.processEvent(event)
             }
         }
     }
     
-    private func processEvent(_ event: NSEvent, source: String) {
+    private func processEvent(_ event: NSEvent) {
         guard self.isEnabled else { return }
         
         if event.type == .flagsChanged {
             self.handleFlagsChanged(event)
         } else if event.type == .keyDown && self.isActive {
-             Logger.shared.log("[SuperKey] keyDown (\(source)) code: \(event.keyCode)")
             self.handleKeyDown(event)
         }
     }
@@ -74,16 +73,13 @@ class SuperKeyManager: ObservableObject {
         
         if maskedModifiers == targetModifiers {
              if !isActive {
-                 Logger.shared.log("[SuperKey] Matches target! Starting session...")
                  startSession()
              }
         } else {
             if isActive {
                 if !inputText.isEmpty {
-                    Logger.shared.log("[SuperKey] Modifiers released. Committing session. Input: \(inputText)")
                     commitAndClose()
                 } else {
-                    Logger.shared.log("[SuperKey] Modifiers released. Cancelling (empty input).")
                     cancelSession()
                 }
             }
@@ -93,7 +89,6 @@ class SuperKeyManager: ObservableObject {
     private func handleKeyDown(_ event: NSEvent) {
         // Esc to cancel
         if event.keyCode == 53 { // ESC
-            Logger.shared.log("[SuperKey] ESC pressed. Cancelling.")
             cancelSession()
             return
         }
@@ -133,10 +128,7 @@ class SuperKeyManager: ObservableObject {
         
         if let digit = num {
             if inputText.count < 2 {
-                Logger.shared.log("[SuperKey] Valid Digit input: \(digit)")
                 self.inputText.append(String(digit))
-            } else {
-                 Logger.shared.log("[SuperKey] Input limit reached.")
             }
         } else {
             // Check modifiers again. If ONLY modifiers are pressed (unlikely for keyDown), ignore.
@@ -151,25 +143,21 @@ class SuperKeyManager: ObservableObject {
             if event.keyCode == 51 { // Delete
                  if !inputText.isEmpty {
                      inputText.removeLast()
-                     Logger.shared.log("[SuperKey] Backspace.")
                  }
                  return
             }
             
-            Logger.shared.log("[SuperKey] Invalid key code: \(event.keyCode). Cancelling.")
             cancelSession()
         }
     }
     
     private func startSession() {
-        Logger.shared.log("[SuperKey] startSession() called")
         self.isActive = true
         self.inputText = ""
         self.showHUD()
     }
     
     private func cancelSession() {
-        Logger.shared.log("[SuperKey] cancelSession() called")
         self.isActive = false
         self.inputText = ""
         self.hideHUD()
@@ -186,17 +174,14 @@ class SuperKeyManager: ObservableObject {
         self.isActive = false
         self.inputText = ""
         
-        Logger.shared.log("[SuperKey] Posting CreateSuperKeyTimer notification with \(minVal) min")
         NotificationCenter.default.post(name: NSNotification.Name("CreateSuperKeyTimer"), object: nil, userInfo: ["minutes": minVal])
     }
     
     // MARK: - HUD Window Management
     
     private func showHUD() {
-        Logger.shared.log("[SuperKey] showHUD() attempting...")
         
         if hudWindow == nil {
-            Logger.shared.log("[SuperKey] Creating new NSPanel")
             let panel = NSPanel(
                 contentRect: NSRect(x: 0, y: 0, width: 300, height: 200),
                 styleMask: [.borderless, .nonactivatingPanel], 
@@ -236,20 +221,15 @@ class SuperKeyManager: ObservableObject {
             
             panel.contentView = containerView
             self.hudWindow = panel
-            
-            Logger.shared.log("[SuperKey] NSPanel initialized and contentView set")
         }
         
         // NO NOT Reset contentView here. It's already bound to 'self' (active instance).
         
         hudWindow?.center()
-        Logger.shared.log("[SuperKey] Calling orderFront(nil)...")
         hudWindow?.orderFront(nil)
-        Logger.shared.log("[SuperKey] orderFront(nil) Success!")
     }
     
     private func hideHUD() {
-        Logger.shared.log("[SuperKey] hideHUD()")
         hudWindow?.orderOut(nil)
     }
     
