@@ -1,0 +1,502 @@
+:root {
+    --primary-color: #FF9500;
+    --primary-gradient: linear-gradient(135deg, #FF9500, #FFCC00);
+
+    /* Light Mode */
+    --bg-color: #F5F5F7;
+    --text-primary: #1D1D1F;
+    --text-secondary: #86868B;
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    /* 极致透亮 */
+    --glass-border: rgba(255, 255, 255, 0.3);
+    --card-bg: rgba(255, 255, 255, 0.08);
+    --footer-bg: rgba(255, 255, 255, 0.15);
+    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+    --bg-color: #000000;
+    --text-primary: #F5F5F7;
+    --text-secondary: #A1A1A6;
+    --glass-bg: rgba(60, 60, 65, 0.2);
+    /* 深色模式更应剔透 */
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --card-bg: rgba(44, 44, 46, 0.05);
+    --footer-bg: rgba(28, 28, 30, 0.1);
+    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8), 0 0 15px rgba(255, 149, 0, 0.2);
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+body {
+    background-color: transparent !important;
+    /* 必须透明以透出背景 */
+}
+
+#threads-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    /* 放在所有内容之下 */
+    background-color: var(--bg-color);
+    /* 背景色设在这里 */
+    pointer-events: none;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: transparent;
+    /* 设为透明以透出下层内容 */
+    color: var(--text-primary);
+    transition: background-color 0.5s ease;
+    line-height: 1.5;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+nav,
+main,
+footer,
+.extra-features {
+    position: relative;
+    z-index: 2;
+    /* 确保在 container 之上 */
+}
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+}
+
+/* Nav */
+nav {
+    position: fixed;
+    top: 24px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: calc(100% - 48px);
+    /* Match container padding */
+    max-width: 1200px;
+    /* Match container max-width */
+    height: 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 1000;
+    border-radius: 20px;
+    /* Slightly less rounded for a cleaner 'bar' look */
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 1.25rem;
+    white-space: nowrap;
+}
+
+#app-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    /* 为暗色背景下的深色图标添加外发光/边框 */
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] #app-icon {
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.3));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(128, 128, 128, 0.1);
+}
+
+/* Hero Section */
+.hero {
+    padding-top: 160px;
+    padding-bottom: 60px;
+    text-align: center;
+}
+
+.hero h1 {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    line-height: 1.1;
+}
+
+.gradient-text {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    font-size: clamp(1.1rem, 3vw, 1.4rem);
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    padding: 16px 32px;
+    border-radius: 16px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: transform 0.2s;
+}
+
+.btn-primary:hover {
+    transform: scale(1.05);
+}
+
+/* Features (Bento Grid) */
+.features {
+    padding-bottom: 100px;
+}
+
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.bento-item {
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Row-based large items */
+.item-row {
+    grid-column: span 3;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    padding: 40px;
+    gap: 40px;
+}
+
+.item-row.reverse {
+    flex-direction: row-reverse !important;
+}
+
+.item-row .bento-text {
+    flex: 1;
+    padding: 0;
+}
+
+.item-row .bento-video {
+    flex: 1.5;
+    padding: 0;
+}
+
+/* Standard bento text items */
+.bento-text {
+    padding: 32px 32px 16px;
+}
+
+.bento-item h3 {
+    font-size: 1.8rem;
+    margin-bottom: 12px;
+}
+
+.bento-item p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+}
+
+/* Video Containers */
+.bento-video.rounded {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.bento-video video {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    display: block;
+}
+
+/* Small grid adjustment */
+.small-video {
+    margin-top: auto;
+}
+
+/* Footer */
+footer {
+    padding: 0 0 60px;
+}
+
+.footer-content {
+    padding: 48px 24px;
+    border-radius: 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    /* Consistent and tighter spacing */
+    align-items: center;
+}
+
+.footer-text {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.footer-links {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.footer-highlight {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.beian {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    opacity: 0.6;
+}
+
+.beian a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.beian a:hover {
+    text-decoration: underline;
+}
+
+/* Icons */
+.icon {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    fill: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    opacity: 0;
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+
+    .item-row,
+    .item-row.reverse {
+        flex-direction: column !important;
+        padding: 32px;
+        gap: 24px;
+    }
+
+    .item-row .bento-text {
+        text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .bento-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .item-row {
+        grid-column: span 1;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Extra Features Section */
+.extra-features {
+    padding-bottom: 100px;
+    text-align: center;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 48px;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.extra-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+/* 
+   .extra-item matches .bento-item style exactly.
+   Uses .glass class for background/blur logic.
+*/
+.extra-item {
+    border-radius: 24px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid transparent;
+    /* Placeholder to match structure */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.extra-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+[data-theme="dark"] .extra-item:hover {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+    background: rgba(80, 80, 85, 0.4);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.extra-item.full-width {
+    grid-column: span 2;
+    align-items: center;
+    text-align: center;
+    padding: 48px;
+}
+
+.extra-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.extra-content p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Tags for Feature 1 */
+.tags-container {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.tag {
+    background: rgba(255, 149, 0, 0.1);
+    color: var(--primary-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 149, 0, 0.2);
+}
+
+[data-theme="dark"] .tag {
+    background: rgba(255, 149, 0, 0.15);
+}
+
+/* Responsive adjustments for extra features */
+@media (max-width: 768px) {
+    .extra-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .extra-item.full-width {
+        grid-column: span 1;
+    }
+}

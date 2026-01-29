@@ -471,7 +471,7 @@ struct RunningTimerView: View {
                         MarqueeText(
                             text: timer.title.isEmpty ? l10n.t("倒计时") : timer.title,
                             font: .system(size: 13, weight: .medium),
-                            leftFade: 5,
+                            leftFade: 0,
                             rightFade: 5,
                             startDelay: 0.5,
                             alignment: .leading,

@@ -10,19 +10,28 @@ struct MarqueeText: View {
     var isHovering: Bool = true // Control scrolling externally
     
     @State private var animate = false
+    @State private var contentWidth: CGFloat = 0
     
     var body: some View {
         GeometryReader { geometry in
-            let textWidth = text.width(usingFont: font) + 20 // Add buffer for safety
-            let isTooLong = textWidth > geometry.size.width
+            let isTooLong = contentWidth > geometry.size.width + 2 // Add tiny tolerance
             let shouldScroll = isTooLong && isHovering
-            let duration = Double(textWidth) / 40.0 // Faster speed as requested
+            let scrollDistance = contentWidth - geometry.size.width
+            // Calculate duration based on speed (pixels per second), e.g., 30px/sec
+            let duration = Double(contentWidth) / 60.0
             
             ZStack(alignment: alignment) {
                 Text(text)
                     .font(font)
                     .fixedSize() // Prevent wrapping
-                    .offset(x: animate && shouldScroll ? -(textWidth - geometry.size.width) : 0)
+                    .background(
+                        GeometryReader { textGeo in
+                            Color.clear
+                                .onAppear { contentWidth = textGeo.size.width }
+                                .onChange(of: text) { _ in contentWidth = textGeo.size.width }
+                        }
+                    )
+                    .offset(x: animate && shouldScroll ? -scrollDistance : 0)
                     .animation(
                         shouldScroll
                         ? .easeInOut(duration: duration).delay(startDelay).repeatForever(autoreverses: true)
@@ -32,8 +41,10 @@ struct MarqueeText: View {
                     .onAppear {
                         // Reset and restart animation to ensure it catches layout changes
                         animate = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            animate = true
+                        if isHovering {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                animate = true
+                            }
                         }
                     }
                     .onChange(of: isHovering) { hovering in
@@ -54,8 +65,6 @@ struct MarqueeText: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: alignment)
             .clipped()
-            // Fade Edges if needed (Optional, user didn't explicitly ask for fade, just scroll)
-            // But fade looks nicer.
             .mask(
                 HStack(spacing: 0) {
                     if isTooLong {
@@ -70,32 +79,5 @@ struct MarqueeText: View {
                 }
             )
         }
-        .frame(height: 20) // Fixed height for title line
     }
-}
-
-// Helper to calculate text width
-extension String {
-    func width(usingFont font: Font) -> CGFloat {
-        // Platform specific font handling
-        #if canImport(AppKit)
-        let nsFont = font.toNSFont() ?? .systemFont(ofSize: 12)
-        let attributes = [NSAttributedString.Key.font: nsFont]
-        let size = (self as NSString).size(withAttributes: attributes)
-        return size.width
-        #else
-        return 100 // Fallback
-        #endif
-    }
-}
-
-// Font conversion helper
-extension Font {
-    #if canImport(AppKit)
-    func toNSFont() -> NSFont? {
-        // Simplified mapping, robust enough for basic sizing
-        // In a real app, you might need a more comprehensive mappers.
-        return NSFont.systemFont(ofSize: 12) 
-    }
-    #endif
 }

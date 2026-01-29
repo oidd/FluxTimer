@@ -218,7 +218,7 @@ struct DragCapsuleView: View {
         .background(.ultraThinMaterial)
         .overlay(
             BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0)
-                .stroke(.white.opacity(0.2), lineWidth: 2)
+                .stroke(Color(white: 1.0, opacity: 0.2), lineWidth: 2)
         )
         .clipShape(BoneCapsuleShape(dragOffset: isDragging ? dragOffset : 0))
         .fixedSize(horizontal: true, vertical: false)
@@ -242,7 +242,7 @@ struct DragCapsuleView: View {
                                 .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
-                                        .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+                                        .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 0.5)
                                 )
                         )
                         .offset(y: -24)

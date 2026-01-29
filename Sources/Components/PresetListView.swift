@@ -35,7 +35,7 @@ struct PresetListView: View {
                         MarqueeText(
                             text: preset.title,
                             font: .system(size: 14, weight: .medium, design: .rounded),
-                            leftFade: 5,
+                            leftFade: 0,
                             rightFade: 5,
                             startDelay: 0.2,
                             alignment: .leading,

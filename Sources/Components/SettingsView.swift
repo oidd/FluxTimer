@@ -47,7 +47,7 @@ struct SettingsView: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 20))
                             .symbolRenderingMode(.hierarchical)
-                            .foregroundColor(.white.opacity(0.3))
+                            .foregroundColor(Color(white: 1.0, opacity: 0.3))
                     }
                     .buttonStyle(.plain)
                 }
@@ -170,7 +170,7 @@ struct SettingsView: View {
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+                    .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 15)
             .offset(dragOffset)

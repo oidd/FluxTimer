@@ -71,7 +71,7 @@ struct NotificationBannerView: View {
                 
                 // Static Subtle Border
                 RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous)
-                    .strokeBorder(.white.opacity(0.15), lineWidth: 1)
+                    .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 1)
             }
             .frame(width: isExpanded ? 780 : 100, height: 100)
             .clipShape(RoundedRectangle(cornerRadius: 100 * 0.42, style: .continuous))
@@ -94,25 +94,36 @@ struct NotificationBannerView: View {
                                 .foregroundColor(.white)
                         }
                         .frame(width: 56, height: 56)
+                        .background(Color.white.opacity(0.01)) // Ensure clickability
+                        .contentShape(Circle()) 
                     }
                     .buttonStyle(.plain)
+                    .zIndex(100) // Ensure it is above everything else
                     .transition(.asymmetric(insertion: .scale.combined(with: .opacity), removal: .opacity))
                     .padding(.leading, 40)
                     .opacity(contentOpacity)
                     
                     // MIDDLE: Info
-                    VStack(alignment: .leading, spacing: 2) {
+                    // MIDDLE: Info
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(LocalizationManager.shared.t("时间到"))
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white.opacity(0.6))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color(white: 1.0, opacity: 0.5))
+                            .padding(.bottom, -8)
                         
-                        Text(title.isEmpty ? LocalizationManager.shared.t("倒计时结束") : title)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
+                        MarqueeText(
+                            text: title.isEmpty ? LocalizationManager.shared.t("倒计时结束") : title,
+                            font: .system(size: 42, weight: .bold),
+                            leftFade: 0,
+                            rightFade: 16,
+                            startDelay: 2.0,
+                            alignment: .leading,
+                            isHovering: true
+                        )
+                        .frame(height: 52)
                     }
-                    .padding(.leading, 24)
-                    .frame(maxWidth: 350, alignment: .leading)
+                    .padding(.leading, 32)
+                    .frame(maxWidth: 380, alignment: .leading)
                     .opacity(contentOpacity)
                     .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .opacity))
                     
@@ -120,7 +131,8 @@ struct NotificationBannerView: View {
                 }
                 
                 // RIGHT: Three Dots / Snooze Buttons
-                HStack(spacing: isExpanded ? 16 : 8) {
+                // RIGHT: Three Dots / Snooze Buttons
+                HStack(spacing: isExpanded ? 12 : 8) {
                     MorphedSnoozeButton(label: "+\(snoozeOption1) min", isActive: dotStates[0], isExpanded: isExpanded) {
                         if !isDismissing {
                             isDismissing = true
@@ -140,8 +152,8 @@ struct NotificationBannerView: View {
                         }
                     }
                 }
-                .padding(.trailing, isExpanded ? 40 : 0)
-                .frame(width: isExpanded ? nil : 100) // Keep them centered when collapsed
+                .padding(.trailing, isExpanded ? 32 : 0)
+                .frame(width: isExpanded ? nil : 100)
             }
             .frame(width: isExpanded ? 780 : 100, height: 100)
         }
@@ -190,30 +202,31 @@ struct MorphedSnoozeButton: View {
         Button(action: action) {
             ZStack {
                 // Background Layer (Dot or Capsule)
-                RoundedRectangle(cornerRadius: (isActive ? 44 : 12) * 0.42, style: .continuous)
-                    .fill(isActive ? (isHovering ? Color.white.opacity(0.2) : Color.white.opacity(0.1)) : Color.white)
+                // Background Layer (Dot or Capsule)
+                RoundedRectangle(cornerRadius: (isActive ? 36 : 10) * 0.42, style: .continuous)
+                    .fill(isActive ? (isHovering ? Color(white: 1.0, opacity: 0.2) : Color(white: 1.0, opacity: 0.1)) : Color.white)
                     // CRITICAL: Set fixed height to prevent "Giant Capsule" bug
-                    .frame(width: isActive ? nil : 12, height: isActive ? 44 : 12)
+                    .frame(width: isActive ? nil : 10, height: isActive ? 36 : 10)
                     .overlay(
-                        RoundedRectangle(cornerRadius: (isActive ? 44 : 12) * 0.42, style: .continuous)
-                            .strokeBorder(.white.opacity(isActive ? 0.1 : 0), lineWidth: 1)
-                            .frame(height: isActive ? 44 : 12)
+                        RoundedRectangle(cornerRadius: (isActive ? 36 : 10) * 0.42, style: .continuous)
+                            .strokeBorder(Color(white: 1.0, opacity: isActive ? 0.1 : 0), lineWidth: 1)
+                            .frame(height: isActive ? 36 : 10)
                     )
                 
                 // Content Layer
                 if isActive {
                     Text(label)
-                        .font(.system(size: 18, weight: .medium, design: .rounded))
-                        .foregroundColor(isHovering ? .white : .white.opacity(0.8))
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundColor(isHovering ? .white : Color(white: 1.0, opacity: 0.8))
                         .lineLimit(1)
                         .fixedSize()
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
                         .transition(.scale(scale: 0.5).combined(with: .opacity))
                 }
             }
             .fixedSize(horizontal: false, vertical: true)
-            .frame(height: 44) // Constant height for hit testing
+            .frame(height: 36)
             .scaleEffect(isActive ? 1.0 : (isExpanded ? 1.2 : 0.8))
         }
         .buttonStyle(.plain)
