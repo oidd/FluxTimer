@@ -1,10 +1,15 @@
 import SwiftUI
 import AppKit
 
+class SettingsPanel: NSPanel {
+    override var canBecomeKey: Bool { return true }
+    override var canBecomeMain: Bool { return true }
+}
+
 class SettingsWindowManager: NSObject, ObservableObject {
     static let shared = SettingsWindowManager()
     
-    private var window: NSPanel?
+    private var window: SettingsPanel?
     
     private override init() {
         super.init()
@@ -12,9 +17,9 @@ class SettingsWindowManager: NSObject, ObservableObject {
     
     func show() {
         if window == nil {
-            let panel = NSPanel(
+            let panel = SettingsPanel(
                 contentRect: NSRect(x: 0, y: 0, width: 440, height: 600),
-                styleMask: [.borderless, .nonactivatingPanel, .resizable],
+                styleMask: [.borderless, .resizable],
                 backing: .buffered,
                 defer: false
             )

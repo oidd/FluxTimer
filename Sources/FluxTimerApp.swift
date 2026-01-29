@@ -22,8 +22,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var floatingPanel: FloatingPanel?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Initialize Super Shortcut Manager
+        // Initialize Managers
+        _ = NotificationManager.shared
         _ = SuperKeyManager.shared
+        
+        // Request notification permission if enabled in AppStorage
+        if UserDefaults.standard.bool(forKey: "useSystemNotification") {
+            NotificationManager.shared.requestAuthorization()
+        }
         
         // Create the floating panel
         let contentView = ContentView()

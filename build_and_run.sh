@@ -27,9 +27,9 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<EOF
     <key>CFBundleExecutable</key>
     <string>$APP_NAME</string>
     <key>CFBundleIdentifier</key>
-    <string>com.example.$APP_NAME</string>
+    <string>com.flux.timer</string>
     <key>CFBundleDisplayName</key>
-    <string>流光倒计时</string>
+    <string>FluxTimer</string>
     <key>CFBundleName</key>
     <string>$APP_NAME</string>
     <key>CFBundlePackageType</key>
@@ -38,9 +38,15 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<EOF
     <false/> <!-- Show in Dock -->
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
 </dict>
 </plist>
 EOF
+
+# Codesign (Ad-hoc)
+echo "Signing App Bundle..."
+codesign --force --deep --sign - "$APP_BUNDLE"
 
 # Copy Icon
 if [ -f "Sources/Resources/AppIcon.icns" ]; then

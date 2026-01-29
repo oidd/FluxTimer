@@ -210,6 +210,17 @@ struct SettingsView: View {
                                     Toggle(l10n.t("系统通知"), isOn: $useSystemNotification)
                                         .toggleStyle(CheckboxToggleStyle())
                                         .disabled(useSystemNotification && !useFloatingIsland) // Only disable if it's the LAST one ON
+                                        .onChange(of: useSystemNotification) { newValue in
+                                            if newValue {
+                                                NotificationManager.shared.requestAuthorization { granted in
+                                                    if !granted {
+                                                        // Fallback UI or guidance could be here, 
+                                                        // but for now we just log and let user see it's not working if they denied
+                                                        print("System notification permission was not granted.")
+                                                    }
+                                                }
+                                            }
+                                        }
                                         
                                     Spacer()
                                 }

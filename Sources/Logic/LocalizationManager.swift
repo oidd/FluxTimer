@@ -135,6 +135,22 @@ class LocalizationManager {
             "zh": "当前语言",
             "en": "Current Language"
         ],
+        "系统通知权限": [
+            "zh": "系统通知权限",
+            "en": "Notification Permission"
+        ],
+        "权限请求被拒绝或发生错误。请检查系统设置。": [
+            "zh": "权限请求被拒绝或发生错误。请检查系统设置。",
+            "en": "Permission denied or an error occurred. Please check System Settings."
+        ],
+        "系统通知被禁用": [
+            "zh": "系统通知被禁用",
+            "en": "Notification Disabled"
+        ],
+        "通知权限已被拒绝。请前往“系统设置 > 通知”手动开启 FluxTimer 的权限。": [
+            "zh": "通知权限已被拒绝。请前往“系统设置 > 通知”手动开启 FluxTimer 的权限。",
+            "en": "Permission was denied. Please go to 'System Settings > Notifications' and enable permissions for FluxTimer."
+        ],
         "延长计时": [
             "zh": "延长计时",
             "en": "Extend Time"
