@@ -42,7 +42,7 @@ struct PresetListView: View {
         let effectiveIndex = isRecent ? 0 : (lastRecord != nil ? index + 1 : index)
         
         Button(action: { onSelect(preset) }) {
-            HStack(spacing: 8) {
+            HStack(spacing: 0) {
                 // Minutes Bubble
                 ZStack {
                     RoundedRectangle(cornerRadius: 30 * 0.42, style: .continuous)
@@ -65,11 +65,12 @@ struct PresetListView: View {
                     isHovering: isHovered
                 )
                 .foregroundColor(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: 16)
-                
-                Spacer(minLength: 8)
+                .padding(.leading, 8)
                 
                 if isHovered {
+                    Spacer(minLength: 4)
                     // Right-side Action (Expandable)
                     if isRecent {
                         BookmarkButton(isFavorite: presets.contains { $0.minutes == preset.minutes && $0.title == preset.title }) {
@@ -91,15 +92,18 @@ struct PresetListView: View {
                         ))
                     }
                 } else if isRecent {
-                    // "Recent" Text Badge
+                    // Right-align the "Recent" tag to save space for the title
+                    Spacer(minLength: 4)
                     Text(l10n.t("最近"))
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white.opacity(0.6))
-                        .padding(.horizontal, 7) // Symmetric increased padding
+                        .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Capsule().fill(.white.opacity(0.15)))
                         .fixedSize()
                         .transition(.opacity)
+                } else {
+                    Spacer(minLength: 8)
                 }
             }
             .padding(.vertical, 4)
