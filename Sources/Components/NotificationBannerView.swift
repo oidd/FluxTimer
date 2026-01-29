@@ -22,6 +22,7 @@ struct NotificationBannerView: View {
     @AppStorage("snoozeOption1") private var snoozeOption1: Int = 1
     @AppStorage("snoozeOption2") private var snoozeOption2: Int = 5
     @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
+    @AppStorage("autoDismiss30s") private var autoDismiss30s = true
     
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     
@@ -83,19 +84,28 @@ struct NotificationBannerView: View {
                     // LEFT: Close
                     Button(action: startDismissSequence) {
                         ZStack {
-                            Circle()
-                                .stroke(Color.white.opacity(0.1), lineWidth: 3)
-                            Circle()
-                                .trim(from: 0, to: timeRemaining / totalTime)
-                                .stroke(Color.white.opacity(0.8), style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
+                            if autoDismiss30s {
+                                Circle()
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 3)
+                                Circle()
+                                    .trim(from: 0, to: timeRemaining / totalTime)
+                                    .stroke(Color.white.opacity(0.8), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                                    .rotationEffect(.degrees(-90))
+                            } else {
+                                RoundedRectangle(cornerRadius: 56 * 0.42, style: .continuous) 
+                                    .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                            }
                             Image(systemName: "xmark")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         .frame(width: 56, height: 56)
+                        .frame(width: 56, height: 56)
                         .background(Color.white.opacity(0.01)) // Ensure clickability
-                        .contentShape(Circle()) 
+                        // Conditional Shape and Logic
+                        // If Auto-Dismiss ON: Circle (Matches time remaining)
+                        // If Auto-Dismiss OFF: Rounded Square (Static)
+                        .contentShape(autoDismiss30s ? AnyShape(Circle()) : AnyShape(RoundedRectangle(cornerRadius: 56 * 0.42, style: .continuous))) 
                     }
                     .buttonStyle(.plain)
                     .zIndex(100) // Ensure it is above everything else
@@ -182,10 +192,12 @@ struct NotificationBannerView: View {
             }
         }
         .onReceive(timer) { _ in
-            if timeRemaining > 0 {
-                timeRemaining -= 0.1
-            } else {
-                startDismissSequence()
+            if autoDismiss30s {
+                if timeRemaining > 0 {
+                    timeRemaining -= 0.1
+                } else {
+                    startDismissSequence()
+                }
             }
         }
     }

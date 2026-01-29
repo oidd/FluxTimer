@@ -95,13 +95,13 @@ class LocalizationManager {
             "zh": "通知方式",
             "en": "Notification Method"
         ],
-        "悬浮岛 (灵动岛样式)": [
-            "zh": "悬浮岛 (灵动岛样式)",
-            "en": "Floating Island (Island Style)"
+        "悬浮岛": [
+            "zh": "悬浮岛",
+            "en": "Floating Island"
         ],
-        "系统通知 (通知中心)": [
-            "zh": "系统通知 (通知中心)",
-            "en": "System Notification (Native)"
+        "系统通知": [
+            "zh": "系统通知",
+            "en": "System Notification"
         ],
         "打开系统通知设置...": [
             "zh": "打开系统通知设置...",

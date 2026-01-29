@@ -14,6 +14,7 @@ struct SettingsView: View {
     @AppStorage("snoozeOption1") private var snoozeOption1: Int = 1
     @AppStorage("snoozeOption2") private var snoozeOption2: Int = 5
     @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
+    @AppStorage("autoDismiss30s") private var autoDismiss30s = true
     
     private let l10n = LocalizationManager.shared
     @State private var dragOffset: CGSize = .zero
@@ -84,36 +85,7 @@ struct SettingsView: View {
                             .labelsHidden()
                     }
                     
-                    // Row: Extend Time (Snooze)
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(l10n.t("延长计时"))
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.primary.opacity(0.9))
-                            
-                            Text(l10n.t("用于悬浮岛上快捷延长计时时间"))
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary.opacity(0.8))
-                        }
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 8) {
-                            snoozeInput(value: $snoozeOption1)
-                            snoozeInput(value: $snoozeOption2)
-                            snoozeInput(value: $snoozeOption3)
-                            Text("min")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(Color.white.opacity(0.04))
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .frame(maxWidth: .infinity)
-                    .opacity(useFloatingIsland ? 1.0 : 0.5)
-                    .disabled(!useFloatingIsland)
+                    // Extend Time moved to floating island group
                     
                     // Row: Notification Method (Consolidated)
                     VStack(alignment: .leading, spacing: 10) {
@@ -124,11 +96,11 @@ struct SettingsView: View {
                         
                         VStack(alignment: .leading, spacing: 12) {
                             HStack(spacing: 24) {
-                                Toggle(l10n.t("悬浮岛 (灵动岛样式)"), isOn: $useFloatingIsland)
+                                Toggle(l10n.t("悬浮岛"), isOn: $useFloatingIsland)
                                     .toggleStyle(CheckboxToggleStyle())
                                     .disabled(useFloatingIsland && !useSystemNotification) // Only disable if it's the LAST one ON
                                 
-                                Toggle(l10n.t("系统通知 (通知中心)"), isOn: $useSystemNotification)
+                                Toggle(l10n.t("系统通知"), isOn: $useSystemNotification)
                                     .toggleStyle(CheckboxToggleStyle())
                                     .disabled(useSystemNotification && !useFloatingIsland) // Only disable if it's the LAST one ON
                                     
@@ -160,12 +132,60 @@ struct SettingsView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .padding(.top, 4)
+
+                    // NEW GROUP: Floating Island Settings
+                    if useFloatingIsland {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(l10n.t("悬浮岛"))
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 4)
+                            
+                            VStack(spacing: 8) {
+                                // 1. Extend Time (Moved here)
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(l10n.t("延长计时"))
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(.primary.opacity(0.9))
+                                        
+                                        Text(l10n.t("用于悬浮岛上快捷延长计时时间"))
+                                            .font(.system(size: 11))
+                                            .foregroundColor(.secondary.opacity(0.8))
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    HStack(spacing: 8) {
+                                        snoozeInput(value: $snoozeOption1)
+                                        snoozeInput(value: $snoozeOption2)
+                                        snoozeInput(value: $snoozeOption3)
+                                        Text("min")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(Color.white.opacity(0.04))
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                
+                                // 2. Auto Dismiss Toggle
+                                settingsRow(title: l10n.t("30秒自动关闭")) {
+                                    Toggle("", isOn: $autoDismiss30s)
+                                        .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                        .labelsHidden()
+                                }
+                            }
+                        }
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(width: 440, height: 380) // Increased height for new option
+            .frame(width: 440) // Allow height to be dynamic
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
