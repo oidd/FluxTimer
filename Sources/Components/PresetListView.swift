@@ -46,8 +46,7 @@ struct PresetListView: View {
                 // Minutes Bubble
                 ZStack {
                     RoundedRectangle(cornerRadius: 30 * 0.42, style: .continuous)
-                        .strokeBorder(.white.opacity(0.3), lineWidth: 1)
-                        .background(RoundedRectangle(cornerRadius: 30 * 0.42, style: .continuous).fill(.white.opacity(0.2)))
+                        .fill(.white.opacity(0.2))
                         .frame(width: 30, height: 30)
                     
                     Text("\(preset.minutes)")
@@ -107,7 +106,7 @@ struct PresetListView: View {
                 }
             }
             .padding(.vertical, 4)
-            .padding(.horizontal, 6) // Symmetric row padding
+            .padding(.horizontal, 4)
             .frame(width: isHovered ? 190 : 160, alignment: .leading) // DYNAMIC WIDTH
             .background(.ultraThinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 38 * 0.42, style: .continuous))
