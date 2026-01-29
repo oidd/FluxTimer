@@ -44,6 +44,7 @@ struct ContentView: View {
     @AppStorage("useFloatingIsland") private var useFloatingIsland = true
     @AppStorage("useSystemNotification") private var useSystemNotification = false
     @AppStorage("enableSound") private var enableSound = true
+    @State private var isButtonDragging = false
     @AppStorage("appLanguage") private var appLanguage: AppLanguage = .auto
     @AppStorage("enableLastRecord") private var enableLastRecord = true
     @AppStorage("lastRecordMinutes") private var lastRecordMinutes: Int = 0
@@ -140,11 +141,13 @@ struct ContentView: View {
                                 }
                             }
                         }
-                    }) {
+                    }, isPressed: $isButtonDragging) {
                         Color.clear.contentShape(Circle())
                     }
                 }
                 .frame(width: 50, height: 50)
+                .scaleEffect(isButtonDragging ? 0.92 : 1.0)
+                .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isButtonDragging)
                 .overlay(
                     // SHIMMER LIGHT SWEEP
                     GeometryReader { geo in

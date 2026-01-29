@@ -3,16 +3,19 @@ import AppKit
 
 struct ClickDraggableButton<Content: View>: NSViewRepresentable {
     var action: () -> Void
+    @Binding var isPressed: Bool
     var content: () -> Content
     
-    init(action: @escaping () -> Void, @ViewBuilder content: @escaping () -> Content) {
+    init(action: @escaping () -> Void, isPressed: Binding<Bool> = .constant(false), @ViewBuilder content: @escaping () -> Content) {
         self.action = action
+        self._isPressed = isPressed
         self.content = content
     }
     
     func makeNSView(context: Context) -> DraggableView {
         let view = DraggableView()
         view.action = action
+        view.isPressed = $isPressed
         
         // Host the SwiftUI content
         let hostingView = NSHostingView(rootView: content())
@@ -31,10 +34,8 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
     
     func updateNSView(_ nsView: DraggableView, context: Context) {
         nsView.action = action
-        // Update hosted content if needed?
-        // For static content (icon), it's fine. For rotating icon, we might need to update the rootView.
-        // But simply recreating the hosting view might be expensive.
-        // Let's try to update the rootView of the existing hostingView.
+        nsView.isPressed = $isPressed
+        
         if let hostingView = nsView.subviews.first as? NSHostingView<Content> {
             hostingView.rootView = content()
         }
@@ -42,6 +43,8 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
     
     class DraggableView: NSView {
         var action: (() -> Void)?
+        var isPressed: Binding<Bool>?
+        
         private var startLocation: NSPoint?
         private var hasDragged = false
         private var trackingArea: NSTrackingArea?
@@ -58,7 +61,6 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         }
         
         override func mouseEntered(with event: NSEvent) {
-            // AUTO-ACTIVATE: As soon as the mouse touches the button, bring app to front!
             NSApp.activate(ignoringOtherApps: true)
             self.window?.makeKeyAndOrderFront(nil)
         }
@@ -66,18 +68,20 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         override func acceptsFirstMouse(for event: NSEvent?) -> Bool { return true }
         
         override func mouseDown(with event: NSEvent) {
-            // Redundant but safe: Ensure focus again on click
             self.window?.makeKeyAndOrderFront(nil)
             
             startLocation = event.locationInWindow
             hasDragged = false
+            
+            DispatchQueue.main.async {
+                self.isPressed?.wrappedValue = true
+            }
         }
         
         override func mouseDragged(with event: NSEvent) {
             guard let start = startLocation else { return }
             let current = event.locationInWindow
             
-            // Allow a small threshold before treating as drag
             if abs(current.x - start.x) > 2 || abs(current.y - start.y) > 2 {
                 hasDragged = true
                 self.window?.performDrag(with: event)
@@ -85,10 +89,13 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         }
         
         override func mouseUp(with event: NSEvent) {
+            DispatchQueue.main.async {
+                self.isPressed?.wrappedValue = false
+            }
+            
             if !hasDragged {
                 action?()
             }
-            // Reset
             startLocation = nil
             hasDragged = false
         }
