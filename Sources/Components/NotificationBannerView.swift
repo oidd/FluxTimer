@@ -105,7 +105,7 @@ struct NotificationBannerView: View {
                         // Conditional Shape and Logic
                         // If Auto-Dismiss ON: Circle (Matches time remaining)
                         // If Auto-Dismiss OFF: Rounded Square (Static)
-                        .contentShape(autoDismiss30s ? AnyShape(Circle()) : AnyShape(RoundedRectangle(cornerRadius: 56 * 0.42, style: .continuous))) 
+                        .modifier(ButtonShapeModifier(autoDismiss30s: autoDismiss30s))
                     }
                     .buttonStyle(.plain)
                     .zIndex(100) // Ensure it is above everything else
@@ -249,6 +249,18 @@ struct MorphedSnoozeButton: View {
                     isHovering = hover
                 }
             }
+        }
+    }
+}
+
+struct ButtonShapeModifier: ViewModifier {
+    let autoDismiss30s: Bool
+    
+    func body(content: Content) -> some View {
+        if #available(macOS 13.0, *) {
+            content.contentShape(autoDismiss30s ? AnyShape(Circle()) : AnyShape(RoundedRectangle(cornerRadius: 56 * 0.42, style: .continuous)))
+        } else {
+            content.contentShape(Rectangle())
         }
     }
 }

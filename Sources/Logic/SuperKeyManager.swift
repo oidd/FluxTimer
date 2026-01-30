@@ -200,7 +200,9 @@ class SuperKeyManager: ObservableObject {
             // Create Hosting View once
             let hostingView = NSHostingView(rootView: HUDWrapper(manager: self))
             hostingView.translatesAutoresizingMaskIntoConstraints = false
-            hostingView.sizingOptions = .preferredContentSize // Allow it to size the window
+            if #available(macOS 13.0, *) {
+                hostingView.sizingOptions = .preferredContentSize // Allow it to size the window
+            }
             
             // Create a container view to hold the hosting view
             // This often helps stabilize layout for borderless windows

@@ -57,19 +57,28 @@ struct TimerCircleView: View {
                 }
                 
                 if !isTransitioning {
+                if #available(macOS 14.0, *) {
                     Text("\(Int(remainingTime))")
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .contentTransition(.numericText(value: remainingTime))
                         .animation(.snappy, value: remainingTime)
                         .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+                } else {
+                    Text("\(Int(remainingTime))")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .animation(.snappy, value: remainingTime)
+                        .transition(.opacity.animation(.easeInOut(duration: 0.2)))
+                }
                 }
             }
         }
         .frame(width: 50, height: 50)
-        .onChange(of: remainingTime) { oldValue, newValue in
+        .onChange(of: remainingTime) { newValue in
             // Trigger "Retract & Reveal" transition when crossing 60s
-            if oldValue > 60 && newValue <= 60 {
+            // We use a simple state check since we don't have oldValue in this version of onChange
+            if newValue <= 60 && !revealedIndices.contains(0) && !isTransitioning {
                 isTransitioning = true
                 retractProgress = 1.0
                 revealedIndices = []

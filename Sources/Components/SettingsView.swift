@@ -50,7 +50,9 @@ struct SettingsView: View {
                             Toggle("", isOn: $launchAtLogin)
                                 .toggleStyle(SwitchToggleStyle(tint: .accentColor))
                                 .onChange(of: launchAtLogin) { newValue in
-                                    toggleLaunchAtLogin(enabled: newValue)
+                                    if #available(macOS 13.0, *) {
+                                        toggleLaunchAtLogin(enabled: newValue)
+                                    }
                                 }
                                 .labelsHidden()
                         }
@@ -351,6 +353,7 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity)
     }
     
+    @available(macOS 13.0, *)
     private func toggleLaunchAtLogin(enabled: Bool) {
         do {
             if enabled {

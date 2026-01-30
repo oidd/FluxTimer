@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "FluxTimer",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v12)
     ],
     products: [
         .executable(name: "FluxTimer", targets: ["FluxTimer"])
