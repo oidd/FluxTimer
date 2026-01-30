@@ -42,7 +42,7 @@ class NotificationWindowManager: NSObject {
             }
         )
         
-        let hostingView = NSHostingView(rootView: contentView)
+        let hostingView = NSHostingView(rootView: contentView.preferredColorScheme(.dark))
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = NSColor.clear.cgColor
         panel.contentView = hostingView

@@ -41,7 +41,7 @@ class SettingsWindowManager: NSObject, ObservableObject {
             panel.standardWindowButton(.miniaturizeButton)?.isEnabled = false
             panel.standardWindowButton(.zoomButton)?.isEnabled = false
             
-            let hostingView = NSHostingView(rootView: DynamicSettingsView())
+            let hostingView = NSHostingView(rootView: DynamicSettingsView().preferredColorScheme(.dark))
             // Ensure hosting view doesn't have a background
             hostingView.layer?.backgroundColor = NSColor.clear.cgColor
             

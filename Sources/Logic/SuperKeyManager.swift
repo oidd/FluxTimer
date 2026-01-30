@@ -198,7 +198,7 @@ class SuperKeyManager: ObservableObject {
             panel.isReleasedWhenClosed = false
             
             // Create Hosting View once
-            let hostingView = NSHostingView(rootView: HUDWrapper(manager: self))
+            let hostingView = NSHostingView(rootView: HUDWrapper(manager: self).preferredColorScheme(.dark))
             hostingView.translatesAutoresizingMaskIntoConstraints = false
             if #available(macOS 13.0, *) {
                 hostingView.sizingOptions = .preferredContentSize // Allow it to size the window
