@@ -53,6 +53,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         )
         
         floatingPanel?.contentView = ClickThroughHostingView(rootView: contentView.preferredColorScheme(.dark))
+        floatingPanel?.appearance = NSAppearance(named: .vibrantDark)
         floatingPanel?.center() // Center on screen initially
         floatingPanel?.makeKeyAndOrderFront(nil)
     }

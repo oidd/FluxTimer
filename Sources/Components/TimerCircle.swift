@@ -8,7 +8,8 @@ struct TimerCircleView: View {
     @State private var isTransitioning = false
     @State private var retractProgress: CGFloat = 1.0 // 1 to 0: Line shrinks
     @State private var revealedIndices: Set<Int> = [] // Track CCW reveal sequence
-    
+    @State private var previousTime: TimeInterval?
+
     var body: some View {
         ZStack {
             // Background Blur
@@ -76,9 +77,12 @@ struct TimerCircleView: View {
         }
         .frame(width: 50, height: 50)
         .onChange(of: remainingTime) { newValue in
-            // Trigger "Retract & Reveal" transition when crossing 60s
-            // We use a simple state check since we don't have oldValue in this version of onChange
-            if newValue <= 60 && !revealedIndices.contains(0) && !isTransitioning {
+            // Use local state to simulate oldValue for precise boundary detection
+            let oldVal = previousTime ?? newValue
+            previousTime = newValue
+            
+            // Trigger "Retract & Reveal" transition ONLY when crossing 60s (from >60 to <=60)
+            if oldVal > 60 && newValue <= 60 && !isTransitioning {
                 isTransitioning = true
                 retractProgress = 1.0
                 revealedIndices = []

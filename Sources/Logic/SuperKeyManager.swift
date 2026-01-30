@@ -196,6 +196,7 @@ class SuperKeyManager: ObservableObject {
             panel.center()
             panel.ignoresMouseEvents = true
             panel.isReleasedWhenClosed = false
+            panel.appearance = NSAppearance(named: .vibrantDark)
             
             // Create Hosting View once
             let hostingView = NSHostingView(rootView: HUDWrapper(manager: self).preferredColorScheme(.dark))

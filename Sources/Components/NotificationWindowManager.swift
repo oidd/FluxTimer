@@ -28,6 +28,7 @@ class NotificationWindowManager: NSObject {
         panel.ignoresMouseEvents = false
         panel.level = .floating 
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.appearance = NSAppearance(named: .vibrantDark)
         
         // Create Hosting Controller
         let contentView = NotificationBannerView(
