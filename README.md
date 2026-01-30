@@ -3,6 +3,8 @@
 Minimalist timing aesthetics for macOS.
 
 Flux Timer is an immersive countdown tool designed exclusively for macOS, focusing on providing a pure and aesthetic focus experience. It turns the passage of time into a visual ceremony on your desktop.
+Visit the official website to view the demo video.
+https://ivean.com/fluxtimer/
 
 ## Key Features
 
@@ -48,6 +50,8 @@ Flux Timer is an immersive countdown tool designed exclusively for macOS, focusi
 极致简约的 macOS 计时交互美学。
 
 流光倒计时是一款专为 macOS 打造的沉浸式倒计时工具，旨在为您提供最纯粹的专注体验。让时间的流逝，也能成为一种桌面的美学。
+访问官网查看演示视频。
+https://ivean.com/fluxtimer/
 
 ## 核心功能
 
