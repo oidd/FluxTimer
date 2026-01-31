@@ -12,6 +12,12 @@ struct RunningTimer: Identifiable, Equatable {
     var title: String
 }
 
+// Layout mode enum for horizontal/vertical arrangement
+enum LayoutMode: String, CaseIterable {
+    case horizontal = "horizontal"
+    case vertical = "vertical"
+}
+
 struct ContentView: View {
     enum AppState {
         case idle // Plus button only
@@ -31,6 +37,7 @@ struct ContentView: View {
     // MULTI-TIMER STATE
     @State private var runningTimers: [RunningTimer] = []
     @State private var hoverLockout = false // Prevent unintended hover during transitions
+    @State private var isLayoutTransitioning = false // For layout switch animation
     
     @State private var savedPresets: [TimerPreset] = [
         TimerPreset(minutes: 5, title: LocalizationManager.shared.t("休息一下")),
@@ -47,6 +54,8 @@ struct ContentView: View {
     @AppStorage("enableLastRecord") private var enableLastRecord = true
     @AppStorage("lastRecordMinutes") private var lastRecordMinutes: Int = 0
     @AppStorage("lastRecordTitle") private var lastRecordTitle: String = ""
+    @AppStorage("layoutMode") private var layoutMode: LayoutMode = .horizontal
+    @State private var isHidingForSwitch = false // For sequential layout switch animation
 
     
     private let l10n = LocalizationManager.shared
@@ -66,31 +75,68 @@ struct ContentView: View {
         
         ZStack(alignment: .topLeading) {
             
-            // 1. LEFT WING (Timers)
-            // Ends at x = 363 (375 - 12)
-            HStack(spacing: 12) {
-                Spacer() // Fill from left
-                ForEach($runningTimers) { $timer in
-                    RunningTimerView(timer: $timer, hoverLockout: $hoverLockout, onStop: {
-                         stopTimer(timer)
-                    })
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            // 1. TIMERS CONTAINER
+            Group {
+                if layoutMode == .horizontal {
+                    // HORIZONTAL: Timers on the left, growing leftwards
+                    HStack(spacing: 12) {
+                        Spacer()
+                        if !isHidingForSwitch {
+                            ForEach($runningTimers) { $timer in
+                                RunningTimerView(timer: $timer, hoverLockout: $hoverLockout, layoutMode: .horizontal, onStop: {
+                                     stopTimer(timer)
+                                })
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                            }
+                        }
+                    }
+                    .padding(.trailing, 62) // Gap from button at x=500
+                    .frame(width: 525, height: 80, alignment: .trailing) 
+                    .mask(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear, location: 0),
+                                .init(color: .black, location: 0.15),
+                                .init(color: .black, location: 1.0)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .offset(x: 0, y: 25)
+                    .transition(.identity)
+                } else {
+                    // VERTICAL: Timers BELOW the button
+                    VStack(alignment: .leading, spacing: 12) {
+                        if !isHidingForSwitch {
+                            ForEach($runningTimers.reversed()) { $timer in
+                                RunningTimerView(timer: $timer, hoverLockout: $hoverLockout, layoutMode: .vertical, onStop: {
+                                     stopTimer(timer)
+                                })
+                                .frame(width: 250, alignment: .leading)
+                                .transition(.move(edge: .top).combined(with: .opacity))
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.leading, 8)
+                    .padding(.top, 62) // Gap from button bottom (40+50)
+                    .frame(width: 260, height: 500, alignment: .top)
+                    .mask(
+                        LinearGradient(
+                            stops: [
+                                .init(color: .black, location: 0),
+                                .init(color: .black, location: 0.85),
+                                .init(color: .clear, location: 1.0)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .offset(x: 467, y: 40)
+                    .transition(.identity)
                 }
             }
-            .padding(.trailing, 62) // Maintain 12px gap from button during running
-            .frame(width: 525, height: 80, alignment: .trailing) 
-            .mask(
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: 0),
-                        .init(color: .black, location: 0.15),
-                        .init(color: .black, location: 1.0)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            ) 
-            .offset(x: 0, y: 35) 
             .zIndex(10)
             
             // 2. CENTER ANCHOR (Button + Presets)
@@ -168,6 +214,24 @@ struct ContentView: View {
                 .contextMenu {
                     Toggle(l10n.t("始终置顶"), isOn: $isAlwaysOnTop)
                     
+                    Divider()
+                    
+                    Picker(selection: Binding(
+                        get: { layoutMode },
+                        set: { newMode in
+                            switchLayoutMode(to: newMode)
+                        }
+                    ), label: EmptyView()) {
+                        Text(l10n.t("横向") + l10n.t("布局"))
+                            .tag(LayoutMode.horizontal)
+                        
+                        Text(l10n.t("纵向") + l10n.t("布局"))
+                            .tag(LayoutMode.vertical)
+                    }
+                    .pickerStyle(.inline)
+                    
+                    Divider()
+                    
                     Button(l10n.t("设置")) {
                         SettingsWindowManager.shared.show()
                     }
@@ -196,8 +260,10 @@ struct ContentView: View {
                     }
                 }
             }
-            .offset(x: 475, y: 50)
+            // Button position: y:40 (Provides space for labels above)
+            .offset(x: 475, y: 40)
             .zIndex(100) // Always on Top
+            .id("mainButton") // Fixed ID to prevent re-render on timer updates
             
             // 3. RIGHT WING (Capsule)
             // Starts at x = 437 (425 + 12)
@@ -258,12 +324,14 @@ struct ContentView: View {
                     }
                 }
             }
-            .offset(x: 537, y: 50)
+            // Right wing position: fixed with button y:40
+            .offset(x: 537, y: 40)
             .zIndex(50) // Behind button, in front of background
             
 
         }
-        .frame(width: 1000, height: 600, alignment: .topLeading)
+        // Zero-Wall window frame (1000x800)
+        .frame(width: 1000, height: 800, alignment: .topLeading)
         .onAppear {
             updateWindowLevel()
             NotificationManager.shared.requestAuthorization()
@@ -424,6 +492,28 @@ struct ContentView: View {
             savedPresets.removeAll { $0.id == preset.id }
         }
     }
+    
+    /// Switch layout mode with "absorb and release" animation
+    func switchLayoutMode(to newMode: LayoutMode) {
+        guard newMode != layoutMode else { return }
+        
+        // Phase 1: Hide current timers sequentially (reuse remove transition)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            isHidingForSwitch = true
+        }
+        
+        // Phase 2: Switch layout mode after hide animation completes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            self.layoutMode = newMode
+            
+            // Phase 3: Show new timers (reuse add transition)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    self.isHidingForSwitch = false
+                }
+            }
+        }
+    }
 
     private func updateWindowLevel() {
         if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" || $0.level == .floating || $0.level == .normal }) {
@@ -437,6 +527,7 @@ struct ContentView: View {
 struct RunningTimerView: View {
     @Binding var timer: RunningTimer
     @Binding var hoverLockout: Bool
+    var layoutMode: LayoutMode = .horizontal
     var onStop: () -> Void
     
     @State private var isHovering = false
@@ -451,8 +542,20 @@ struct RunningTimerView: View {
         return String(format: "%02d:%02d", m, s)
     }
     
+    // Determine alignment based on layout mode
+    // Horizontal: expand to the left (align trailing, content grows left)
+    // Vertical: expand to the right (align leading, content grows right)
+    private var zStackAlignment: Alignment {
+        layoutMode == .horizontal ? .trailing : .leading
+    }
+    
+    // Transition edge for expanded content
+    private var expandTransitionEdge: Edge {
+        layoutMode == .horizontal ? .trailing : .leading
+    }
+    
     var body: some View {
-        ZStack(alignment: .leading) {
+        ZStack(alignment: zStackAlignment) {
             // Morphing logic
             let effectiveHover = isHovering && !isClosing
             
@@ -469,75 +572,127 @@ struct RunningTimerView: View {
             }
 
             HStack(spacing: 8) {
-                // 1. Left Icon: Badge (Hover) OR Progress Ring (Normal)
-                ZStack {
-                    if effectiveHover {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 42 * 0.42, style: .continuous)
-                                .fill(Color.white.opacity(0.2)) 
-                            
-                            Text("\(Int(timer.totalTime / 60))")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(.white)
-                        }
-                        .frame(width: 42, height: 42) 
-                        .transition(.scale.combined(with: .opacity))
-                    } else {
-                        TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
-                            .transition(.identity)
-                    }
-                }
+                // For vertical layout, circle is on the left, content expands to the right
+                // For horizontal layout, content is on the left, circle is on the right
                 
-                // 2. Expanded Info (Visible on Hover)
-                if effectiveHover {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(formattedTime)
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .monospacedDigit()
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
-                        
-                        MarqueeText(
-                            text: timer.title.isEmpty ? l10n.t("倒计时") : timer.title,
-                            font: .system(size: 13, weight: .medium),
-                            leftFade: 0,
-                            rightFade: 5,
-                            startDelay: 0.5,
-                            alignment: .leading,
-                            isHovering: effectiveHover
-                        )
-                        .frame(width: 80, height: 16)
-                        .opacity(0.8)
-                    }
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                if layoutMode == .horizontal {
+                    // HORIZONTAL: Ball on LEFT, content expands to RIGHT, close button on far RIGHT
+                    // [Ball] [Time+Title] [X]
                     
-                    // Close Button
-                    Button(action: {
-                        // START CLOSING SEQUENCE
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            isClosing = true      // Morph back into circle
-                            hoverLockout = true  // Lock other timers' hover
-                        }
-                        
-                        // Wait for morph back animation
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            onStop() // Trigger parent removal
-                            
-                            // Re-enable hover after removal is likely done
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                                hoverLockout = false
+                    // 1. Left Icon: Badge (Hover) OR Progress Ring (Normal)
+                    ZStack {
+                        if effectiveHover {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 42 * 0.42, style: .continuous)
+                                    .fill(Color.white.opacity(0.2)) 
+                                
+                                Text("\(Int(timer.totalTime / 60))")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
                             }
+                            .frame(width: 42, height: 42) 
+                            .transition(.scale.combined(with: .opacity))
+                        } else {
+                            TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
+                                .transition(.identity)
                         }
-                    }) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white.opacity(0.8))
-                            .frame(width: 24, height: 24)
-                            .contentShape(Circle())
                     }
-                    .buttonStyle(.plain)
-                    .padding(.trailing, 4)
-                    .transition(.scale.combined(with: .opacity))
+                    
+                    // 2. Expanded Info (Visible on Hover) - expands to the RIGHT
+                    if effectiveHover {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(formattedTime)
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
+                            
+                            MarqueeText(
+                                text: timer.title.isEmpty ? l10n.t("倒计时") : timer.title,
+                                font: .system(size: 13, weight: .medium),
+                                leftFade: 0,
+                                rightFade: 5,
+                                startDelay: 0.5,
+                                alignment: .leading,
+                                isHovering: effectiveHover
+                            )
+                            .frame(width: 80, height: 16)
+                            .opacity(0.8)
+                        }
+                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                        
+                        // Close Button (rightmost)
+                        Button(action: {
+                            performClose()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.8))
+                                .frame(width: 24, height: 24)
+                                .contentShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.trailing, 4)
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                } else {
+                    // VERTICAL: Circle on left, content expands to the right
+                    // 1. Left Icon: Badge (Hover) OR Progress Ring (Normal)
+                    ZStack {
+                        if effectiveHover {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 42 * 0.42, style: .continuous)
+                                    .fill(Color.white.opacity(0.2)) 
+                                
+                                Text("\(Int(timer.totalTime / 60))")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: 42, height: 42) 
+                            .transition(.scale.combined(with: .opacity))
+                        } else {
+                            TimerCircleView(totalTime: timer.totalTime, remainingTime: timer.remainingTime)
+                                .transition(.identity)
+                        }
+                    }
+                    
+                    // 2. Expanded Info (Visible on Hover)
+                    if effectiveHover {
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(formattedTime)
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .monospacedDigit()
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.1), radius: 1, x: 0, y: 1)
+                            
+                            MarqueeText(
+                                text: timer.title.isEmpty ? l10n.t("倒计时") : timer.title,
+                                font: .system(size: 13, weight: .medium),
+                                leftFade: 0,
+                                rightFade: 5,
+                                startDelay: 0.5,
+                                alignment: .leading,
+                                isHovering: effectiveHover
+                            )
+                            .frame(width: 80, height: 16)
+                            .opacity(0.8)
+                        }
+                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        
+                        // Close Button (rightmost in vertical)
+                        Button(action: {
+                            performClose()
+                        }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.8))
+                                .frame(width: 24, height: 24)
+                                .contentShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.trailing, 4)
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
             }
             .padding(.leading, effectiveHover ? 4 : 0)
@@ -554,6 +709,24 @@ struct RunningTimerView: View {
             }
         }
         .padding(.vertical, 0)
+    }
+    
+    private func performClose() {
+        // START CLOSING SEQUENCE
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            isClosing = true      // Morph back into circle
+            hoverLockout = true  // Lock other timers' hover
+        }
+        
+        // Wait for morph back animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            onStop() // Trigger parent removal
+            
+            // Re-enable hover after removal is likely done
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                hoverLockout = false
+            }
+        }
     }
     
     @Namespace private var namespace

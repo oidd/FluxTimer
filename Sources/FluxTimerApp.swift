@@ -51,7 +51,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView()
         
         floatingPanel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 600), // Expanded for Drag buffer
+            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 800), // Adjusted for Zero-Wall strategy (button at top)
             backing: .buffered,
             defer: false
         )

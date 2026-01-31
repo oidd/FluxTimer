@@ -246,6 +246,22 @@ class LocalizationManager {
         "在程序坞中显示图标": [
             "zh": "在程序坞中显示图标",
             "en": "Show Icon in Dock"
+        ],
+        "布局方式": [
+            "zh": "布局方式",
+            "en": "Layout"
+        ],
+        "横向": [
+            "zh": "横向",
+            "en": "Horizontal"
+        ],
+        "纵向": [
+            "zh": "纵向",
+            "en": "Vertical"
+        ],
+        "布局": [
+            "zh": "布局",
+            "en": " Layout"
         ]
     ]
     

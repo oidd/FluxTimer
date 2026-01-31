@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FluxTimer UI 变量与称呼清单</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #007aff;
+            --bg: #0a0a0c;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent: #5e5ce6;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+            background-image:
+                radial-gradient(circle at 10% 10%, rgba(94, 92, 230, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(0, 122, 255, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff 0%, #007aff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .intro {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .intro p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            display: flex;
+            alignment: center;
+            color: var(--primary);
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        td {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--card-border);
+            vertical-align: top;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .variable {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            color: var(--primary);
+            background: rgba(0, 122, 255, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .alias {
+            font-weight: 600;
+            color: #fff;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .effect {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: var(--accent);
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            margin-top: 80px;
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 600px) {
+
+            td,
+            th {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>FluxTimer UI 变量与称呼清单</h1>
+        </header>
+
+        <div class="intro">
+            <p>为了方便你以后直接调整参数，我总结了软件中各个重要 UI 页面的变量名、你可能会使用的称呼以及这些参数的影响。配合这份清单，你可以更快捷地指挥我完成视觉微调。</p>
+        </div>
+
+        <h2>1. 核心状态与主界面 (Main UI)</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">UI 元素 / 称呼</th>
+                        <th style="width: 25%">代码变量/状态</th>
+                        <th>影响范围</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="alias">当前状态</span><span class="effect">APP 阶段</span></td>
+                        <td><span class="variable">appState</span></td>
+                        <td>决定 UI 是处于闲置 (idle)、设置 (setting) 还是运行中 (running)。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">主按钮</span><span class="effect">加号按钮、圆圈按钮</span></td>
+                        <td><span class="variable">ClickDraggableButton</span></td>
+                        <td>点击展开设置条，悬停时会有扫光效果。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">扫光进度</span><span class="effect">光效、反光进度</span></td>
+                        <td><span class="variable">shimmerProgress</span></td>
+                        <td>控制主按钮在鼠标悬停时的白色光带移动。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">预设列表</span><span class="effect">常见时间、瀑布流</span></td>
+                        <td><span class="variable">showPresets</span></td>
+                        <td>控制下方快捷选择列表的显示和隐藏动画。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>2. 快照条 / 设置胶囊 (Drag Capsule)</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">UI 元素 / 称呼</th>
+                        <th style="width: 25%">代码变量/状态</th>
+                        <th>影响范围</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="alias">时间设置</span><span class="effect">里面的分钟数、数字</span></td>
+                        <td><span class="variable">minutes</span></td>
+                        <td>倒计时计划设置的总时长（分钟）。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">提醒标题</span><span class="effect">输入框、提醒内容</span></td>
+                        <td><span class="variable">timerTitle</span></td>
+                        <td>倒计时运行时显示的文字描述。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">快照条外形</span><span class="effect">胶囊外框、边缘弧度</span></td>
+                        <td><span class="variable">BoneCapsuleShape</span></td>
+                        <td>影响快照条的圆角 (0.42 弧度) 和拖拽时的拉伸效果。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">预计结束时间</span><span class="effect">上方小气泡、时间预览</span></td>
+                        <td><span class="variable">endDate</span></td>
+                        <td>拖拽时上方显示的“预计 XX 结束”的动态提示。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>3. 运行中的计时球 (Timer View)</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">UI 元素 / 称呼</th>
+                        <th style="width: 25%">代码变量/状态</th>
+                        <th>影响范围</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="alias">进度圆环</span><span class="effect">计时球外圈、进度条</span></td>
+                        <td><span class="variable">TimerCircleView</span></td>
+                        <td>控制外圈的白色圆环（分钟模式）或刻度（秒模式）。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">悬停效果</span><span class="effect">滑过后的方块、详细面板</span></td>
+                        <td><span class="variable">isHovering</span></td>
+                        <td>鼠标移上去时球体变成圆角矩形，显示标题和关闭按钮。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">剩余时间</span><span class="effect">球内数字、剩下秒数</span></td>
+                        <td><span class="variable">remainingTime</span></td>
+                        <td>实时更新的倒计时剩余时长。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>4. 悬浮岛 / 结束通知 (Floating Island)</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">UI 元素 / 称呼</th>
+                        <th style="width: 25%">代码变量/状态</th>
+                        <th>影响范围</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="alias">自动关闭时间</span><span class="effect">左侧圆圈、消失进度</span></td>
+                        <td><span class="variable">timeRemaining</span></td>
+                        <td>30秒倒计时，左侧有个圆圈慢慢转动表示即将消失。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">延时选项</span><span class="effect">snooze按钮、+5/+30</span></td>
+                        <td><span class="variable">snoozeOption1 / 2 / 3</span></td>
+                        <td>控制悬浮岛上三个小圆点点击后增加的时间跨度。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">星空背景</span><span class="effect">底色光效、流星动画</span></td>
+                        <td><span class="variable">StarfieldView</span></td>
+                        <td>悬浮岛背景中循环播放的深邃星空扫光效果。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>5. 全局设置 (Global Settings)</h2>
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">设置项</th>
+                        <th style="width: 25%">代码变量</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="alias">始终置顶</span></td>
+                        <td><span class="variable">isAlwaysOnTop</span></td>
+                        <td>控制窗口是否始终浮于其他窗口上方。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">通知方式</span></td>
+                        <td><span class="variable">useFloatingIsland</span></td>
+                        <td>是否启用顶部的自定义悬浮岛通知。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">提示音效</span></td>
+                        <td><span class="variable">enableSound</span></td>
+                        <td>计时结束时是否播放提示音。</td>
+                    </tr>
+                    <tr>
+                        <td><span class="alias">快捷键组合</span></td>
+                        <td><span class="variable">superShortcutModifiers</span></td>
+                        <td>超级快捷键的组合修饰键（默认 Cmd+Opt）。</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            <p>FluxTimer UI Variable Map • Generated for Advanced Customization</p>
+        </footer>
+    </div>
+</body>
+
+</html>

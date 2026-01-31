@@ -45,7 +45,8 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         var action: (() -> Void)?
         var isPressed: Binding<Bool>?
         
-        private var startLocation: NSPoint?
+        private var initialMouseLocation: NSPoint?
+        private var initialWindowFrame: NSRect?
         private var hasDragged = false
         private var trackingArea: NSTrackingArea?
         
@@ -70,8 +71,12 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         override func mouseDown(with event: NSEvent) {
             self.window?.makeKeyAndOrderFront(nil)
             
-            startLocation = event.locationInWindow
+            // For click-through or action
             hasDragged = false
+            
+            // Store initial state for manual dragging
+            initialMouseLocation = NSEvent.mouseLocation
+            initialWindowFrame = self.window?.frame
             
             DispatchQueue.main.async {
                 self.isPressed?.wrappedValue = true
@@ -79,12 +84,37 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         }
         
         override func mouseDragged(with event: NSEvent) {
-            guard let start = startLocation else { return }
-            let current = event.locationInWindow
+            guard let window = self.window,
+                  let initialMouse = initialMouseLocation,
+                  let initialFrame = initialWindowFrame else { return }
             
-            if abs(current.x - start.x) > 2 || abs(current.y - start.y) > 2 {
+            let currentMouse = NSEvent.mouseLocation
+            let deltaX = currentMouse.x - initialMouse.x
+            let deltaY = currentMouse.y - initialMouse.y
+            
+            // Only consider it a drag if moved significantly
+            if !hasDragged && (abs(deltaX) > 2 || abs(deltaY) > 2) {
                 hasDragged = true
-                self.window?.performDrag(with: event)
+            }
+            
+            if hasDragged {
+                var newFrame = initialFrame
+                newFrame.origin.x += deltaX
+                newFrame.origin.y += deltaY
+                
+                // SAFETY CLAMP: Ensure the button (at y:40 in window) remains clickable.
+                // Button bottom is at height - 90. We want this to be at least 20px below screen top.
+                if let screen = window.screen {
+                    let screenTop = screen.visibleFrame.maxY
+                    let buttonScreenBottom = newFrame.origin.y + newFrame.size.height - 90
+                    
+                    if buttonScreenBottom > screenTop - 20 {
+                        newFrame.origin.y = screenTop - 20 - (newFrame.size.height - 90)
+                    }
+                }
+                
+                // Set frame manually to bypass performDrag constraints
+                window.setFrame(newFrame, display: true, animate: false)
             }
         }
         
@@ -96,7 +126,8 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
             if !hasDragged {
                 action?()
             }
-            startLocation = nil
+            initialMouseLocation = nil
+            initialWindowFrame = nil
             hasDragged = false
         }
     }

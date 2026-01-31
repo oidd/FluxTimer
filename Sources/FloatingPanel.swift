@@ -10,6 +10,7 @@ class FloatingPanel: NSPanel {
         self.isOpaque = false
         self.backgroundColor = .clear
         self.hasShadow = false // swiftUI view handles shadow
+        self.isMovable = true // ENSURE MOVABLE
         self.isMovableByWindowBackground = false // Disable global drag to allow component gestures
     }
     
@@ -19,5 +20,12 @@ class FloatingPanel: NSPanel {
     
     override var canBecomeMain: Bool {
         return true
+    }
+    
+    // BREAK THE INVISIBLE WALL:
+    // macOS normally constrains borderless windows to keep their top edge below the menu bar.
+    // By returning the requested frameRect as-is, we bypass these system-level constraints.
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        return frameRect
     }
 }
