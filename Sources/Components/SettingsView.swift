@@ -16,6 +16,7 @@ struct SettingsView: View {
     @AppStorage("snoozeOption3") private var snoozeOption3: Int = 30
     @AppStorage("autoDismiss30s") private var autoDismiss30s = true
     @AppStorage("enableLastRecord") private var enableLastRecord = true
+    @AppStorage("showDockIcon") private var showDockIcon = true
     
     // Super Shortcut
     @AppStorage("enableSuperShortcut") private var enableSuperShortcut = true
@@ -103,6 +104,17 @@ struct SettingsView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
+                        
+                        Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
+                        
+                        settingsRow(title: l10n.t("在程序坞中显示图标")) {
+                            Toggle("", isOn: $showDockIcon)
+                                .toggleStyle(SwitchToggleStyle(tint: .accentColor))
+                                .onChange(of: showDockIcon) { newValue in
+                                    NotificationCenter.default.post(name: NSNotification.Name("ToggleDockIcon"), object: nil, userInfo: ["show": newValue])
+                                }
+                                .labelsHidden()
+                        }
                         
                         Divider().overlay(Color.white.opacity(0.1)).padding(.horizontal, 16)
                         

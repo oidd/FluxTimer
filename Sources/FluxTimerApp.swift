@@ -35,8 +35,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Observe language changes
         NotificationCenter.default.addObserver(self, selector: #selector(languageChanged), name: LocalizationManager.languageChangedNotification, object: nil)
         
-        // Ensure the app is treated as a regular app with a menu bar
-        NSApp.setActivationPolicy(.regular)
+        // Observe dock icon toggle
+        NotificationCenter.default.addObserver(self, selector: #selector(toggleDockIcon), name: NSNotification.Name("ToggleDockIcon"), object: nil)
+        
+        // Ensure the app activation policy is correctly set on launch
+        let showIcon = UserDefaults.standard.bool(forKey: "showDockIcon")
+        NSApp.setActivationPolicy(showIcon ? .regular : .accessory)
         
         // Request notification permission if enabled in AppStorage
         if UserDefaults.standard.bool(forKey: "useSystemNotification") {
@@ -110,6 +114,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         mainMenu.addItem(appMenuItem)
         
         NSApp.mainMenu = mainMenu
+    }
+
+    @objc private func toggleDockIcon(_ notification: Notification) {
+        if let show = notification.userInfo?["show"] as? Bool {
+            NSApp.setActivationPolicy(show ? .regular : .accessory)
+            
+            // After policy change, the app might lose focus or windows might be re-ordered.
+            // We force reactivate and bring visible windows to the front.
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+                for window in NSApp.windows {
+                    if window.isVisible {
+                        window.orderFrontRegardless()
+                    }
+                }
+            }
+        }
     }
 
     @objc private func showSettings() {

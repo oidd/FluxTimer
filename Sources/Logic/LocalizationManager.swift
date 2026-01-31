@@ -242,6 +242,10 @@ class LocalizationManager {
         "服务": [
             "zh": "服务",
             "en": "Services"
+        ],
+        "在程序坞中显示图标": [
+            "zh": "在程序坞中显示图标",
+            "en": "Show Icon in Dock"
         ]
     ]
     
