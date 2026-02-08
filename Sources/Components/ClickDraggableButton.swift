@@ -18,7 +18,7 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         view.isPressed = $isPressed
         
         // Host the SwiftUI content
-        let hostingView = NSHostingView(rootView: content())
+        let hostingView = FirstMouseHostingView(rootView: content())
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(hostingView)
         
@@ -36,8 +36,15 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         nsView.action = action
         nsView.isPressed = $isPressed
         
-        if let hostingView = nsView.subviews.first as? NSHostingView<Content> {
+        if let hostingView = nsView.subviews.first as? FirstMouseHostingView<Content> {
             hostingView.rootView = content()
+        }
+    }
+    
+    // Custom Hosting View to allow click-through (acceptsFirstMouse)
+    private class FirstMouseHostingView<Content: View>: NSHostingView<Content> {
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool {
+            return true
         }
     }
     
@@ -69,6 +76,8 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
         override func acceptsFirstMouse(for event: NSEvent?) -> Bool { return true }
         
         override func mouseDown(with event: NSEvent) {
+            // FORCE ACTIVATE on click to resolve "double click needed" issues
+            NSApp.activate(ignoringOtherApps: true)
             self.window?.makeKeyAndOrderFront(nil)
             
             // For click-through or action
