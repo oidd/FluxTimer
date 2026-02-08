@@ -679,7 +679,7 @@ struct RunningTimerView: View {
                             .frame(width: 96, height: 16)
                             .opacity(0.8)
                         }
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+                        .transition(.scale(scale: 0.9, anchor: .leading).combined(with: .opacity))
                         
                         // Close Button (rightmost in vertical)
                         Button(action: {

@@ -393,6 +393,10 @@ struct SettingsView: View {
                 RoundedRectangle(cornerRadius: 6, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
             )
+            .onChange(of: value.wrappedValue) { newValue in
+                if newValue < 1 { value.wrappedValue = 1 }
+                else if newValue > 999 { value.wrappedValue = 999 }
+            }
     }
 
     private func checkAccessibility() {
