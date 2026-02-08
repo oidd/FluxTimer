@@ -127,7 +127,7 @@ class SuperKeyManager: ObservableObject {
         }
         
         if let digit = num {
-            if inputText.count < 2 {
+            if inputText.count < 3 {
                 self.inputText.append(String(digit))
             }
         } else {
