@@ -586,8 +586,9 @@ struct RunningTimerView: View {
                                 RoundedRectangle(cornerRadius: 42 * 0.42, style: .continuous)
                                     .fill(Color.white.opacity(0.2)) 
                                 
-                                Text("\(Int(timer.totalTime / 60))")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                let mins = Int(timer.totalTime / 60)
+                                Text("\(mins)")
+                                    .font(.system(size: mins > 99 ? 13 : 16, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                             }
                             .frame(width: 42, height: 42) 
@@ -616,7 +617,7 @@ struct RunningTimerView: View {
                                 alignment: .leading,
                                 isHovering: effectiveHover
                             )
-                            .frame(width: 80, height: 16)
+                            .frame(width: 96, height: 16)
                             .opacity(0.8)
                         }
                         .transition(.move(edge: .trailing).combined(with: .opacity))
@@ -644,8 +645,9 @@ struct RunningTimerView: View {
                                 RoundedRectangle(cornerRadius: 42 * 0.42, style: .continuous)
                                     .fill(Color.white.opacity(0.2)) 
                                 
-                                Text("\(Int(timer.totalTime / 60))")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                let mins = Int(timer.totalTime / 60)
+                                Text("\(mins)")
+                                    .font(.system(size: mins > 99 ? 13 : 16, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                             }
                             .frame(width: 42, height: 42) 
@@ -674,7 +676,7 @@ struct RunningTimerView: View {
                                 alignment: .leading,
                                 isHovering: effectiveHover
                             )
-                            .frame(width: 80, height: 16)
+                            .frame(width: 96, height: 16)
                             .opacity(0.8)
                         }
                         .transition(.move(edge: .leading).combined(with: .opacity))

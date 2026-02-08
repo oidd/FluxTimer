@@ -29,8 +29,9 @@ struct TimerCircleView: View {
                     .animation(.linear(duration: 1.0), value: remainingTime)
                 
                 if !isTransitioning {
-                    Text("\(Int(ceil(remainingTime / 60.0)))")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                    let mins = Int(ceil(remainingTime / 60.0))
+                    Text("\(mins)")
+                        .font(.system(size: mins > 99 ? 17 : 22, weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .transition(.opacity.animation(.easeInOut(duration: 0.2)))
                 }

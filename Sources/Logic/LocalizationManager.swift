@@ -262,6 +262,18 @@ class LocalizationManager {
         "布局": [
             "zh": "布局",
             "en": " Layout"
+        ],
+        "松手输入": [
+            "zh": "松手输入",
+            "en": "Release to input"
+        ],
+        "次日": [
+            "zh": "次日",
+            "en": "Next Day"
+        ],
+        "次日 %@": [
+            "zh": "次日 %@",
+            "en": "Next Day %@"
         ]
     ]
     

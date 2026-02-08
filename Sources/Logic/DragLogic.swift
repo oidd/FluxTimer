@@ -46,8 +46,8 @@ class DragLogic {
             calculatedMinutes = 60.0 + (zone3Distance / 5.0) // 5px per minute (Fast)
         }
         
-        // Cap at 99
-        calculatedMinutes = min(99, calculatedMinutes)
+        // Cap at 999
+        calculatedMinutes = min(999, calculatedMinutes)
         
         // Snapping Logic with "Sticky" plateau
         var finalResult = Int(round(calculatedMinutes))
@@ -76,7 +76,7 @@ class DragLogic {
     }
     
     func width(for minutes: Int) -> CGFloat {
-        let mins = Double(max(0, min(99, minutes)))
+        let mins = Double(max(0, min(999, minutes)))
         
         if mins <= 15 {
             return (mins / 15.0) * zone1Limit

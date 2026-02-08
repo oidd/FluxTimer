@@ -36,6 +36,7 @@ struct DragCapsuleView: View {
     
     @State private var isEditing = false
     @FocusState private var isFocused: Bool // For input focus
+    @State private var showManualInputHint = false // New state for hint
     
     private let l10n = LocalizationManager.shared
     
@@ -56,7 +57,7 @@ struct DragCapsuleView: View {
                         .monospacedDigit()
                         .multilineTextAlignment(.leading)
                         .textFieldStyle(.plain)
-                        .frame(width: 40)
+                        .frame(width: 48) // Increased Width for 3 digits
                         .onSubmit {
                             isEditing = false
                         }
@@ -64,14 +65,22 @@ struct DragCapsuleView: View {
                             if !focused { isEditing = false }
                         }
                 } else {
-                    Text(String(format: l10n.t("%d min"), minutes))
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .monospacedDigit()
-                        .offset(y: -0.5)
-                        .onTapGesture {
-                            isEditing = true
-                            isFocused = true
-                        }
+                    // Display Logic: Show Hint or Time
+                    if showManualInputHint {
+                        Text(l10n.t("松手输入"))
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(.orange)
+                            .offset(y: -0.5)
+                    } else {
+                        Text(String(format: l10n.t("%d min"), minutes))
+                            .font(.system(size: 16, weight: .medium, design: .rounded))
+                            .monospacedDigit()
+                            .offset(y: -0.5)
+                            .onTapGesture {
+                                isEditing = true
+                                isFocused = true
+                            }
+                    }
                 }
             }
             .padding(.horizontal, 14)
@@ -131,6 +140,24 @@ struct DragCapsuleView: View {
                         if !isDragging { NSCursor.closedHand.push() }
                         isDragging = true
                         dragOffset = value.translation.width
+                        
+                        // Calculate raw minutes from logic (unlimited)
+                        let rawMinutes = dragLogic.minutes(for: value.translation.width)
+                        
+                        if rawMinutes > 99 {
+                            // Over limit -> Hint Mode
+                            if minutes != 99 { minutes = 99 } // Stick at 99
+                            if !showManualInputHint {
+                                withAnimation { showManualInputHint = true }
+                            }
+                        } else {
+                            // Normal Mode
+                            if minutes != rawMinutes { minutes = rawMinutes }
+                            if showManualInputHint {
+                                withAnimation { showManualInputHint = false }
+                            }
+                        }
+                        
                         dragChanged(value.translation.width)
                     }
                     .onEnded { _ in
@@ -138,6 +165,16 @@ struct DragCapsuleView: View {
                         isDragging = false
                         NSCursor.pop()
                         dragEnded()
+                        
+                        // If hint was shown, trigger edit mode
+                        if showManualInputHint {
+                            showManualInputHint = false
+                            // Must dispatch to avoid state conflicts during drag end processing
+                            DispatchQueue.main.async {
+                                isEditing = true
+                                isFocused = true
+                            }
+                        }
                     }
             )
         }
@@ -151,40 +188,18 @@ struct DragCapsuleView: View {
         .fixedSize(horizontal: true, vertical: false)
         .shadow(color: .black.opacity(0.1), radius: 10, y: 5)
         .overlay(alignment: .topLeading) {
-            if minutes > 0 {
-                TimelineView(.periodic(from: .now, by: 1.0)) { context in
-                    let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
-                    let timeString = endDate.formatted(date: .omitted, time: .standard)
-                    let localizedFormat = LocalizationManager.shared.t("预计 %@ 结束计时")
-                    
-                    Text(String(format: localizedFormat, timeString))
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundColor(.white.opacity(0.9))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 3)
-                        .background(
-                            RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
-                                        .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 0.5)
-                                )
-                        )
-                        .offset(y: -24)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
+            endTimerPredictionView
         }
         .onChange(of: minutes) { newValue in
-            // Clamp input
-            if newValue > 99 { minutes = 99 }
+            // Clamp input -> 999
+            if newValue > 999 { minutes = 999 }
             if newValue < 0 { minutes = 0 }
             
             // Sync width if not dragging
             if !isDragging {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    // If manually entered > 99, we still want the capsule to look "full" or similar.
+                    // DragLogic.width(for:) will handle >99 by extending further, which is fine.
                     dragOffset = dragLogic.width(for: minutes)
                 }
             }
@@ -193,6 +208,38 @@ struct DragCapsuleView: View {
             // Initial sync
             if minutes > 0 {
                 dragOffset = dragLogic.width(for: minutes)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var endTimerPredictionView: some View {
+        if minutes > 0 {
+            TimelineView(.periodic(from: .now, by: 1.0)) { context in
+                let endDate = Date().addingTimeInterval(TimeInterval(minutes * 60))
+                let timeString = endDate.formatted(date: .omitted, time: .shortened)
+                let localizedFormat = LocalizationManager.shared.t("预计 %@ 结束计时")
+                
+                let isNextDay = !Calendar.current.isDate(Date(), inSameDayAs: endDate)
+                let displayTime = isNextDay ? LocalizationManager.shared.t("次日") + " " + timeString : timeString
+                
+                Text(String(format: localizedFormat, displayTime))
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 22 * 0.42, style: .continuous)
+                                    .strokeBorder(Color(white: 1.0, opacity: 0.15), lineWidth: 0.5)
+                            )
+                    )
+                    .offset(y: -24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
