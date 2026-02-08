@@ -102,14 +102,46 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
                 newFrame.origin.x += deltaX
                 newFrame.origin.y += deltaY
                 
-                // SAFETY CLAMP: Ensure the button (at y:40 in window) remains clickable.
-                // Button bottom is at height - 90. We want this to be at least 20px below screen top.
                 if let screen = window.screen {
-                    let screenTop = screen.visibleFrame.maxY
-                    let buttonScreenBottom = newFrame.origin.y + newFrame.size.height - 90
+                    let visibleFrame = screen.visibleFrame
                     
-                    if buttonScreenBottom > screenTop - 20 {
-                        newFrame.origin.y = screenTop - 20 - (newFrame.size.height - 90)
+                    // Button Geometry relative to Window (1000x800)
+                    // Button X: 475, Width: 50 -> Range [475, 525]
+                    // Button Y from top: 40, Height: 50 -> Top: Height-40, Bottom: Height-90
+                    // Window Height: 800
+                    
+                    let buttonOffsetX: CGFloat = 475
+                    let buttonWidth: CGFloat = 50
+                    let buttonOffsetYFromTop: CGFloat = 40
+                    let buttonHeight: CGFloat = 50
+                    
+                    // 1. Calculate Button's Global Frame
+                    let buttonGlobalLeft = newFrame.origin.x + buttonOffsetX
+                    let buttonGlobalRight = buttonGlobalLeft + buttonWidth
+                    
+                    let windowTop = newFrame.origin.y + newFrame.size.height
+                    let buttonGlobalTop = windowTop - buttonOffsetYFromTop
+                    let buttonGlobalBottom = buttonGlobalTop - buttonHeight
+                    
+                    // 2. Clamp Horizontal (Left / Right)
+                    // Left Edge
+                    if buttonGlobalLeft < visibleFrame.minX {
+                        newFrame.origin.x = visibleFrame.minX - buttonOffsetX
+                    }
+                    // Right Edge
+                    if buttonGlobalRight > visibleFrame.maxX {
+                        newFrame.origin.x = visibleFrame.maxX - buttonOffsetX - buttonWidth
+                    }
+                    
+                    // 3. Clamp Vertical (Top / Bottom)
+                    // Top Edge (Keep button inside visible area)
+                    if buttonGlobalTop > visibleFrame.maxY {
+                        newFrame.origin.y = visibleFrame.maxY - newFrame.size.height + buttonOffsetYFromTop
+                    }
+                    
+                    // Bottom Edge
+                    if buttonGlobalBottom < visibleFrame.minY {
+                        newFrame.origin.y = visibleFrame.minY - newFrame.size.height + buttonOffsetYFromTop + buttonHeight
                     }
                 }
                 
@@ -125,7 +157,14 @@ struct ClickDraggableButton<Content: View>: NSViewRepresentable {
             
             if !hasDragged {
                 action?()
+            } else {
+                // Save position after drag
+                if let window = self.window {
+                    let originString = NSStringFromPoint(window.frame.origin)
+                    UserDefaults.standard.set(originString, forKey: "windowPosition")
+                }
             }
+            
             initialMouseLocation = nil
             initialWindowFrame = nil
             hasDragged = false
